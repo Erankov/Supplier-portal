@@ -16,7 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  LIVE_URL: https://capable-boba-6868ba.netlify.app
+  # Only the live steps pass this on as LIVE_URL; the first run must test the repo copy.
+  SITE_URL: https://capable-boba-6868ba.netlify.app
   TZ: Asia/Jerusalem
 
 jobs:
@@ -41,6 +42,7 @@ jobs:
       - name: Test the copy in the repo
         id: local
         continue-on-error: true
+        timeout-minutes: 10
         env:
           CI: 'true'
         run: npx playwright test
@@ -51,14 +53,18 @@ jobs:
 
       - name: Wait for the live site to update
         continue-on-error: true
+        timeout-minutes: 12
+        env:
+          LIVE_URL: ${{ env.SITE_URL }}
         run: node wait-for-live.js
 
       - name: Test the live site
         id: live
         continue-on-error: true
+        timeout-minutes: 10
         env:
           CI: 'true'
-          LIVE_URL: ${{ env.LIVE_URL }}
+          LIVE_URL: ${{ env.SITE_URL }}
         run: npx playwright test --output=results/artifacts-live
 
       - name: Keep live results

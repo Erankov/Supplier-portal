@@ -8,9 +8,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   for (let i = 1; i <= 40; i++) {
     try {
-      const html = await (await fetch(url + '/?v=' + Date.now(), { cache: 'no-store' })).text();
+      const html = await (await fetch(url + '/?v=' + Date.now(), { cache: 'no-store', signal: AbortSignal.timeout(20_000) })).text();
       const src = (html.match(/src="\.?\/?(assets\/[^"]+\.js)"/) || [])[1];
-      const js = src ? await (await fetch(url + '/' + src, { cache: 'no-store' })).text() : '';
+      const js = src ? await (await fetch(url + '/' + src, { cache: 'no-store', signal: AbortSignal.timeout(20_000) })).text() : '';
       const got = (js.match(/\bei="(\d+\.\d+)"/) || [])[1];
       console.log(`try ${i}: live version ${got || '?'}, waiting for ${want}`);
       if (got === want) return;
