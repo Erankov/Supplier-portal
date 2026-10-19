@@ -1,5 +1,6 @@
 # Static site: no build step, publish the site/ folder.
 # Skip deploys when nothing under site/ changed (e.g. a test report commit).
+# The repo is public so Netlify's free plan deploys commits from any author (a private repo only deploys the owner's commits).
 [build]
   publish = "site"
   command = ""

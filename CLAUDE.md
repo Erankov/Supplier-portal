@@ -17,3 +17,7 @@ Run the tests and push only if they pass:
 
 Add a test for each new feature or fixed bug. GitHub Actions (`.github/workflows/tests.yml`) runs the
 same tests again on the repo copy and on the live site after each push and commits `דוח-בדיקות.md`.
+
+## Netlify and commit authors
+The repo must stay public. On Netlify's free plan a private repo only deploys commits authored by the
+owner and blocks the rest with "Unrecognized Git contributor".
