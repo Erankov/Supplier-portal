@@ -25,7 +25,8 @@ const test = base.test.extend({
 
 // Opens the demo (fake data kept in this browser only) as a supplier or a store.
 async function openDemo(page, role, hash = '') {
-  await page.addInitScript(r => sessionStorage.setItem('demo_role', r), role);
+  // try: the script also runs on about:blank, where sessionStorage is off limits.
+  await page.addInitScript(r => { try { sessionStorage.setItem('demo_role', r); } catch {} }, role);
   await page.goto('/?demo' + (hash ? '#/' + hash : ''));
   await base.expect(page.locator('.demo-bar')).toBeVisible();
 }

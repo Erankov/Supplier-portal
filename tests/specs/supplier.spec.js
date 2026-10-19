@@ -48,6 +48,43 @@ test.describe('ספק', () => {
     await expect(page.locator('tr.ord .s-cancelled')).toHaveCount(1);
   });
 
+  test('קטלוג משלה לחנות עם מחיר מיוחד', async ({ page }) => {
+    await openDemo(page, 'admin', 'stores');
+    await page.locator('tbody tr', { hasText: 'חנות לדוגמה' }).getByRole('button', { name: 'קטלוג ומחירים' }).click();
+    const modal = page.locator('.modal');
+    await modal.getByRole('button', { name: 'רק מוצרים שבחרתי' }).click();
+    await modal.getByLabel('חיפוש בקטלוג החנות').fill('6295-7');
+    await modal.getByRole('button', { name: 'סימון כל המוצרים ברשימה' }).click();
+    await modal.getByLabel('חיפוש בקטלוג החנות').fill('6295-753');
+    await modal.getByLabel(/^מחיר מיוחד:/).fill('50');
+    await modal.getByRole('button', { name: 'שמירת הקטלוג' }).click();
+    await expect(modal).toBeHidden();
+    await expect(page.locator('tbody tr', { hasText: 'חנות לדוגמה' })).toContainText('קטלוג משלה');
+
+    // The store sees only the chosen products, at its own price.
+    // (about:blank first, so that only the hash changing still reloads the app with the new role)
+    await page.goto('about:blank');
+    await openDemo(page, 'store');
+    const items = page.locator('.plist li');
+    await expect(items.first()).toBeVisible();
+    for (const sku of await items.allInnerTexts()) expect(sku).toContain('6295-7');
+    await expect(items.filter({ hasText: '6295-753' })).toContainText('₪50');
+
+    // Back to the full catalog: everything shows again at the regular price.
+    await page.goto('about:blank');
+    await openDemo(page, 'admin', 'stores');
+    await page.locator('tbody tr', { hasText: 'חנות לדוגמה' }).getByRole('button', { name: 'קטלוג ומחירים' }).click();
+    await modal.getByRole('button', { name: 'כל הקטלוג' }).click();
+    await modal.getByLabel('חיפוש בקטלוג החנות').fill('6295-753');
+    await modal.getByLabel(/^מחיר מיוחד:/).fill('');
+    await modal.getByRole('button', { name: 'שמירת הקטלוג' }).click();
+    await expect(modal).toBeHidden();
+    await page.goto('about:blank');
+    await openDemo(page, 'store');
+    await expect(page.locator('.plist li', { hasText: '6295-753' })).toContainText('₪60');
+    await expect(page.locator('.plist li', { hasText: 'פילטר' }).first()).toBeVisible();
+  });
+
   test('הוספת חנות חדשה', async ({ page }) => {
     await openDemo(page, 'admin', 'stores');
     await page.getByRole('button', { name: 'הוספת חנות' }).click();

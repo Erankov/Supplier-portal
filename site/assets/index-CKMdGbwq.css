@@ -140,3 +140,7 @@ input,select,textarea{border-radius:10px}
 .table-wrap{position:relative}
 .page{grid-template-columns:minmax(0,1fr)}
 .page>*{min-width:0}
+/* 1.5: a store's own catalog */
+.badge.cat-own{margin-inline-start:8px;font-weight:500}
+.cat-pick{max-height:52vh;overflow:auto}
+.price-in{width:7.5em}
