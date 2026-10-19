@@ -1,6 +1,6 @@
 # Supplier ordering site
 
-`site/` is the built site (Vite/React bundle, no source). Netlify (capable-boba-6868ba) deploys
+`site/` is the built site (Vite/React bundle, no source). Netlify (suppllier-orders.netlify.app, formerly capable-boba-6868ba) deploys
 `site/` on every push to `main`; there is no build step.
 
 ## Making a change

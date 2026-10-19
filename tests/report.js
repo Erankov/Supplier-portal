@@ -14,7 +14,7 @@ function detail(errors) {
   const lines = [];
   for (const e of errors || []) {
     const text = String(e.message || '').replace(/\u001b\[[0-9;]*m/g, '').split('\n').map(l => l.trim().replace(/^- /, ''));
-    for (const l of text.slice(1)) if (KEY.test(l) && !lines.includes(l)) lines.push(l);
+    for (const l of text.slice(1)) if (KEY.test(l) && !lines.includes(l)) lines.push(l.length > 160 ? l.slice(0, 160) + '…' : l);
     if (e.location) lines.push(`${path.basename(e.location.file)}:${e.location.line}`);
   }
   return lines.slice(0, 6).map(l => `\n    - \`${l.replace(/`/g, "'")}\``).join('');

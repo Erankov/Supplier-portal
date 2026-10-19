@@ -17,7 +17,7 @@ concurrency:
 
 env:
   # Only the live steps pass this on as LIVE_URL; the first run must test the repo copy.
-  SITE_URL: https://capable-boba-6868ba.netlify.app
+  SITE_URL: https://suppllier-orders.netlify.app
   TZ: Asia/Jerusalem
 
 jobs:
