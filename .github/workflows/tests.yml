@@ -1,0 +1,95 @@
+# Runs the tests after every push to main: first on the copy in the repo, then on the live
+# site once Netlify has deployed it. Writes the results to דוח-בדיקות.md in Hebrew.
+name: בדיקות
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['דוח-בדיקות.md']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tests
+  cancel-in-progress: true
+
+env:
+  LIVE_URL: https://capable-boba-6868ba.netlify.app
+  TZ: Asia/Jerusalem
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Install
+        run: npm ci && npx playwright install --with-deps chromium
+
+      - name: Test the copy in the repo
+        id: local
+        continue-on-error: true
+        env:
+          CI: 'true'
+        run: npx playwright test
+
+      - name: Keep local results
+        if: always()
+        run: mkdir -p results && mv results/results.json results/local.json || true
+
+      - name: Wait for the live site to update
+        continue-on-error: true
+        run: node wait-for-live.js
+
+      - name: Test the live site
+        id: live
+        continue-on-error: true
+        env:
+          CI: 'true'
+          LIVE_URL: ${{ env.LIVE_URL }}
+        run: npx playwright test --output=results/artifacts-live
+
+      - name: Keep live results
+        if: always()
+        run: mv results/results.json results/live.json || true
+
+      - name: Write the report
+        id: report
+        if: always()
+        continue-on-error: true
+        run: node report.js ../דוח-בדיקות.md "לפני העלאה (העותק במאגר)=results/local.json" "האתר באוויר=results/live.json"
+
+      - name: Save the report in the repo
+        if: always()
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add דוח-בדיקות.md
+          git diff --cached --quiet || git commit -m "דוח בדיקות [skip ci]"
+          git pull --rebase origin main && git push origin HEAD:main
+
+      - name: Screenshots of failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failures
+          path: tests/results/artifacts*
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Fail if anything failed
+        if: steps.report.outcome != 'success'
+        run: exit 1

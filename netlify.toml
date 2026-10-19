@@ -1,4 +1,6 @@
-# Static site: no build step, publish the repository root.
+# Static site: no build step, publish the site/ folder.
+# Skip deploys when nothing under site/ changed (e.g. a test report commit).
 [build]
-  publish = "."
+  publish = "site"
   command = ""
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- site/ netlify.toml"

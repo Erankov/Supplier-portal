@@ -136,3 +136,7 @@ input,select,textarea{border-radius:10px}
  .shop-top{padding:8px 16px}
 }
 @media print{.kpi:before,.kpi:after,.kpi>.muted:before{display:none}}
+/* 1.4: on phones, hidden screen-reader labels inside wide tables escaped the scroll box and made the whole page scroll sideways */
+.table-wrap{position:relative}
+.page{grid-template-columns:minmax(0,1fr)}
+.page>*{min-width:0}
