@@ -78,14 +78,24 @@ jobs:
         run: node report.js ../דוח-בדיקות.md "לפני העלאה (העותק במאגר)=results/local.json" "האתר באוויר=results/live.json"
 
       - name: Save the report in the repo
-        if: always()
+        # Not when a newer push cancelled this run: its report would be stale.
+        if: ${{ !cancelled() }}
         working-directory: .
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add דוח-בדיקות.md
-          git diff --cached --quiet || git commit -m "דוח בדיקות [skip ci]"
-          git pull --rebase origin main && git push origin HEAD:main
+          cp דוח-בדיקות.md /tmp/report.md
+          # The report is regenerated each run, so take main as it is and put this run's report on top.
+          for i in 1 2 3; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp /tmp/report.md דוח-בדיקות.md
+            git add דוח-בדיקות.md
+            git diff --cached --quiet && exit 0
+            git commit -qm "דוח בדיקות [skip ci]"
+            git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
 
       - name: Screenshots of failures
         if: always()
