@@ -11,6 +11,8 @@ create table if not exists store_products (
 );
 create index if not exists store_products_product on store_products(product_id);
 alter table store_products enable row level security;
+-- Tables created through the Supabase connector get no API grants; RLS below still limits rows.
+grant select, insert, update, delete on table store_products to authenticated;
 
 -- Only the supplier reads and edits it; stores get their catalog through store_catalog().
 create policy store_products_admin on store_products for all
