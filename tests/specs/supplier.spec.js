@@ -2,6 +2,15 @@ const { test, expect, openDemo, isPhone } = require('./helpers');
 
 const nav = (page, name) => page.locator('.side-links a', { hasText: name });
 
+// A store card on the stores page, opened so its buttons show.
+async function openStore(page, name) {
+  const card = page.locator('.st-card', { hasText: name });
+  const head = card.locator('.st-head');
+  if ((await head.getAttribute('aria-expanded')) !== 'true') await head.click();
+  await expect(head).toHaveAttribute('aria-expanded', 'true');
+  return card;
+}
+
 test.describe('ספק', () => {
   test('ההזמנות מוצגות עם ארבעת כרטיסי הסיכום', async ({ page }) => {
     await openDemo(page, 'admin');
@@ -50,7 +59,7 @@ test.describe('ספק', () => {
 
   test('קטלוג משלה לחנות עם מחיר מיוחד', async ({ page }) => {
     await openDemo(page, 'admin', 'stores');
-    await page.locator('tbody tr', { hasText: 'חנות לדוגמה' }).getByRole('button', { name: 'קטלוג ומחירים' }).click();
+    await (await openStore(page, 'חנות לדוגמה')).getByRole('button', { name: 'קטלוג ומחירים' }).click();
     const modal = page.locator('.modal');
     await modal.getByRole('button', { name: 'רק מוצרים שבחרתי' }).click();
     await modal.getByLabel('חיפוש בקטלוג החנות').fill('6295-7');
@@ -59,7 +68,7 @@ test.describe('ספק', () => {
     await modal.getByLabel(/^מחיר מיוחד:/).fill('50');
     await modal.getByRole('button', { name: 'שמירת הקטלוג' }).click();
     await expect(modal).toBeHidden();
-    await expect(page.locator('tbody tr', { hasText: 'חנות לדוגמה' })).toContainText('קטלוג משלה');
+    await expect(page.locator('.st-card', { hasText: 'חנות לדוגמה' }).locator('.st-head')).toContainText('קטלוג משלה');
 
     // The store sees only the chosen products, at its own price.
     // (about:blank first, so that only the hash changing still reloads the app with the new role)
@@ -73,7 +82,7 @@ test.describe('ספק', () => {
     // Back to the full catalog: everything shows again at the regular price.
     await page.goto('about:blank');
     await openDemo(page, 'admin', 'stores');
-    await page.locator('tbody tr', { hasText: 'חנות לדוגמה' }).getByRole('button', { name: 'קטלוג ומחירים' }).click();
+    await (await openStore(page, 'חנות לדוגמה')).getByRole('button', { name: 'קטלוג ומחירים' }).click();
     await modal.getByRole('button', { name: 'כל הקטלוג' }).click();
     await modal.getByLabel('חיפוש בקטלוג החנות').fill('6295-753');
     await modal.getByLabel(/^מחיר מיוחד:/).fill('');
@@ -94,16 +103,37 @@ test.describe('ספק', () => {
     await modal.getByRole('button', { name: 'הוספה וקבלת קישור' }).click();
     await page.keyboard.press('Escape');
     await page.goto('/?demo#/stores');
-    await expect(page.locator('tbody tr', { hasText: 'חנות בדיקה' })).toBeVisible();
+    await expect(page.locator('.st-card', { hasText: 'חנות בדיקה' })).toContainText('יוסי');
   });
 
   test('חסימת חנות ושחרור', async ({ page }) => {
     await openDemo(page, 'admin', 'stores');
-    const row = page.locator('tbody tr', { hasText: 'חנות לדוגמה' });
-    await row.getByRole('button', { name: 'חסימה' }).click();
-    await expect(row.locator('.badge')).toHaveText('חסומה');
-    await row.getByRole('button', { name: 'שחרור' }).click();
-    await expect(row.locator('.badge')).toHaveText('פעילה');
+    const card = await openStore(page, 'חנות לדוגמה');
+    const status = card.locator('.st-tags .badge').first();
+    await card.getByRole('button', { name: 'חסימה' }).click();
+    await expect(status).toHaveText('חסומה');
+    await card.getByRole('button', { name: 'שחרור' }).click();
+    await expect(status).toHaveText('פעילה');
+  });
+
+  test('חנויות ככרטיסים: לחיצה פותחת פרטים, ואפשר להעלות תמונת עסק', async ({ page }) => {
+    await openDemo(page, 'admin', 'stores');
+    const cards = page.locator('.st-card');
+    await expect(cards).toHaveCount(2);
+    // Closed: no buttons yet, the first letter stands in for a picture.
+    const card = cards.filter({ hasText: 'חנות לדוגמה' });
+    await expect(card.getByRole('button', { name: 'עריכה' })).toHaveCount(0);
+    await expect(card.locator('.st-init')).toHaveText('ח');
+    await openStore(page, 'חנות לדוגמה');
+    await expect(card.locator('.st-facts')).toContainText('הזמנות');
+    // A tiny PNG as the business picture.
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+    await card.getByLabel('תמונת העסק של חנות לדוגמה').setInputFiles({ name: 'shop.png', mimeType: 'image/png', buffer: png });
+    await expect(card.locator('img.st-pic')).toBeVisible();
+    await expect(card.getByText('החלפת תמונה')).toBeVisible();
+    // Tapping again closes it.
+    await card.locator('.st-head').click();
+    await expect(card.getByRole('button', { name: 'עריכה' })).toHaveCount(0);
   });
 
   test('חיפוש בקטלוג', async ({ page }) => {
