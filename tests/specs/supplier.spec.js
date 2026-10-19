@@ -113,6 +113,25 @@ test.describe('ספק', () => {
     await expect(page.locator('tbody tr')).toContainText('סבון כללי 1 ליטר');
   });
 
+  test('קרטון: הספק מגדיר יחידות בקרטון ומחיר לקרטון', async ({ page, context }) => {
+    await openDemo(page, 'admin', 'catalog');
+    await page.getByLabel('חיפוש מוצר').fill('RM 610');
+    await page.locator('tbody tr').getByRole('button', { name: 'עריכה' }).click();
+    const modal = page.locator('.modal');
+    await modal.getByLabel('יחידות בקרטון').fill('12');
+    await modal.getByLabel('מחיר לקרטון שלם').fill('800');
+    // 12 x 60 = 720, so 800 is not a deal and the supplier is told so.
+    await expect(modal.locator('.pk-warn')).toBeVisible();
+    await modal.getByLabel('מחיר לקרטון שלם').fill('600');
+    await expect(modal.locator('.pk-ok')).toContainText('50');
+    await modal.getByRole('button', { name: /שמירה/ }).click();
+    await expect(modal).toBeHidden();
+
+    const shop = await context.newPage();
+    await openDemo(shop, 'store');
+    await expect(shop.locator('.plist li', { hasText: '6295-750' }).locator('.pk-badge')).toHaveText(/קרטון של 12 · ₪600/);
+  });
+
   test('מוצר שהוסתר לא מופיע לחנות', async ({ page, context }) => {
     await openDemo(page, 'admin', 'catalog');
     // The switch saves first and only then flips, so click it and wait for the new state.

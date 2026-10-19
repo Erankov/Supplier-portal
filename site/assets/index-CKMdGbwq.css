@@ -157,3 +157,12 @@ input,select,textarea{border-radius:10px}
 .reg summary b{font-size:17px}
 .reg .last{color:var(--ok);font-weight:500}
 .reg .more{justify-self:center}
+/* 2.0: cartons */
+.pk-badge{display:inline-block;margin-inline-start:6px;padding:1px 8px;border-radius:999px;background:var(--tint);color:var(--accent);font-weight:600;font-size:12px;white-space:nowrap}
+.pk-line{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-top:4px}
+.pk-split{color:var(--ok);font-weight:500}
+.pk-nudge{border:1px dashed color-mix(in srgb,var(--accent) 60%,var(--line));background:var(--tint);color:var(--accent);border-radius:10px;padding:5px 10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-align:start}
+.pk-set{border:1px solid var(--line);border-radius:12px;padding:10px 12px 4px;margin:0;display:grid;gap:8px}
+.pk-set legend{padding:0 6px;font-weight:600;font-size:14px}
+.pk-ok{color:var(--ok)}
+.pk-warn{color:var(--danger,#B42318)}

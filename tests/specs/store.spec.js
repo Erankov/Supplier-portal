@@ -94,6 +94,45 @@ test.describe('חנות', () => {
     await expect(cart.locator('.clist li')).toHaveCount(n);
   });
 
+  test('קרטון: הצעה להשלים לקרטון, ומחיר קרטון + יחידות', async ({ page, context }, testInfo) => {
+    await openDemo(page, 'store');
+    const item = product(page, '6295-753');
+    await expect(item.locator('.pk-badge')).toHaveText(/קרטון של 6 · ₪300/);
+    await item.getByRole('button', { name: /הוספת/ }).click();
+    const box = item.locator('.stepper input');
+
+    // 4 of 6: offered to complete a carton, with the saving (6 x 60 - 300 = 60).
+    await box.fill('4');
+    await box.blur();
+    const nudge = item.locator('.pk-nudge');
+    await expect(nudge).toContainText('עוד 2');
+    await expect(nudge).toContainText('₪60');
+    await nudge.click();
+    await expect(box).toHaveValue('6');
+    await expect(item.locator('.pk-split')).toContainText('קרטון אחד · ₪300');
+
+    // 8 = one carton + 2 units = 300 + 120.
+    await box.fill('8');
+    await box.blur();
+    await expect(item.locator('.pk-split')).toContainText('קרטון אחד + 2 יחידות');
+    await expect(item.locator('.pk-split')).toContainText('₪420');
+    await expect(item.locator('.pk-nudge')).toHaveCount(0);
+    const cart = await openCart(page, testInfo);
+    await expect(cart.locator('.cart-total')).toContainText('₪420');
+    await cart.getByRole('button', { name: 'שליחת ההזמנה' }).click();
+    await expect(page.getByText('ההזמנה נשלחה')).toBeVisible();
+    const number = (await page.getByText(/הזמנה מספר \d+/).innerText()).match(/\d+/)[0];
+
+    // The supplier sees the carton split and the right total.
+    const supplier = await context.newPage();
+    await openDemo(supplier, 'admin');
+    await supplier.locator('tr.ord', { hasText: 'חנות לדוגמה' }).filter({ has: supplier.locator('.s-new') }).first().click();
+    await expect(supplier.getByRole('heading', { name: 'הזמנה ' + number })).toBeVisible();
+    const line = supplier.locator('tbody tr', { hasText: '6295-753' });
+    await expect(line).toContainText('קרטון אחד + 2 יחידות');
+    await expect(line.locator('td').last()).toContainText('420');
+  });
+
   test('כמות: הקלדה, הוצאה מהעגלה וביטול', async ({ page }) => {
     await openDemo(page, 'store');
     const item = product(page, '6295-753');
