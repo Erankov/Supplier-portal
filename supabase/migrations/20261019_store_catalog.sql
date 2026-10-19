@@ -13,7 +13,6 @@ create index if not exists store_products_product on store_products(product_id);
 alter table store_products enable row level security;
 
 -- Only the supplier reads and edits it; stores get their catalog through store_catalog().
-drop policy if exists store_products_admin on store_products;
 create policy store_products_admin on store_products for all
   using (exists (select 1 from stores s where s.id = store_id and is_supplier_admin(s.supplier_id)))
   with check (exists (select 1 from stores s join products p on p.supplier_id = s.supplier_id
@@ -32,25 +31,7 @@ language sql stable security definer set search_path = public as $$
   order by p.category, p.sort, p.name;
 $$;
 
--- Saves a store's catalog in one go. p_rows: [{product_id, price|null}]
-create or replace function set_store_catalog(p_store uuid, p_custom boolean, p_rows jsonb)
-returns integer language plpgsql security definer set search_path = public as $$
-declare st stores; n int;
-begin
-  select * into st from stores where id = p_store;
-  if not found or not is_supplier_admin(st.supplier_id) then raise exception 'forbidden'; end if;
-  if jsonb_typeof(p_rows) <> 'array' then raise exception 'bad rows'; end if;
-  update stores set custom_catalog = coalesce(p_custom, false) where id = p_store;
-  delete from store_products where store_id = p_store;
-  insert into store_products(store_id, product_id, price)
-    select p_store, p.id, nullif(r->>'price', '')::numeric
-    from jsonb_array_elements(p_rows) r
-    join products p on p.id = (r->>'product_id')::uuid and p.supplier_id = st.supplier_id
-    where coalesce(p_custom, false) or nullif(r->>'price', '') is not null
-    on conflict do nothing;
-  get diagnostics n = row_count;
-  return n;
-end $$;
+-- The supplier saves a store's catalog from the site straight into store_products (allowed by the policy above).
 
 -- Orders: only products the store may see, at the store's price.
 create or replace function place_order(p_store uuid, p_lines jsonb, p_note text default '')
@@ -77,5 +58,5 @@ begin
   return jsonb_build_object('id', oid, 'number', num, 'total', tot, 'lines', n);
 end $$;
 
-revoke execute on function store_catalog(uuid) from anon;
-revoke execute on function set_store_catalog(uuid, boolean, jsonb) from anon;
+revoke execute on function store_catalog(uuid) from public, anon;
+grant execute on function store_catalog(uuid) to authenticated;
