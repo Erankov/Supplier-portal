@@ -20,6 +20,24 @@ test.describe('כניסה והרשמה', () => {
     await expect(pw).toHaveAttribute('type', 'password');
   });
 
+  test('המייל נזכר בכניסה הבאה, ואפשר לבטל', async ({ page }) => {
+    await blockServer(page);
+    await page.goto('/');
+    const remember = page.getByLabel('לזכור את המייל במכשיר הזה');
+    await expect(remember).toBeChecked();
+    await page.locator('input[type=email]').fill('store@example.com');
+    await page.locator('input[autocomplete=current-password]').fill('abc12345');
+    await page.getByRole('button', { name: 'כניסה', exact: true }).click();
+    await page.reload();
+    await expect(page.locator('input[type=email]')).toHaveValue('store@example.com');
+
+    // Unticking forgets it, and stays unticked next time.
+    await page.getByLabel('לזכור את המייל במכשיר הזה').uncheck();
+    await page.reload();
+    await expect(page.locator('input[type=email]')).toHaveValue('');
+    await expect(page.getByLabel('לזכור את המייל במכשיר הזה')).not.toBeChecked();
+  });
+
   test.describe('הרשמה', () => {
     let calls;
     test.beforeEach(async ({ page }) => {
