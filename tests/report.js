@@ -8,6 +8,18 @@ const [out, ...sections] = process.argv.slice(2);
 const icon = s => (s === undefined || s === 'skipped' ? '➖' : s === 'passed' ? '✅' : s === 'flaky' ? '⚠️' : '❌');
 const firstLine = msg => String(msg || '').replace(/\u001b\[[0-9;]*m/g, '').split('\n').find(l => l.trim()) || '';
 
+// The lines that say where a failure happened (a timeout's first line alone says nothing).
+const KEY = /^(Locator:|Expected|Received|waiting for|.*intercepts pointer events|.*element is (not|outside))/;
+function detail(errors) {
+  const lines = [];
+  for (const e of errors || []) {
+    const text = String(e.message || '').replace(/\u001b\[[0-9;]*m/g, '').split('\n').map(l => l.trim().replace(/^- /, ''));
+    for (const l of text.slice(1)) if (KEY.test(l) && !lines.includes(l)) lines.push(l);
+    if (e.location) lines.push(`${path.basename(e.location.file)}:${e.location.line}`);
+  }
+  return lines.slice(0, 6).map(l => `\n    - \`${l.replace(/`/g, "'")}\``).join('');
+}
+
 const STATUS = { expected: 'passed', unexpected: 'failed', flaky: 'flaky', skipped: 'skipped' };
 
 // One row per test, one cell per screen size (Playwright lists each size separately).
@@ -21,7 +33,7 @@ function collect(suite, trail, rows) {
       const last = t.results[t.results.length - 1] || {};
       const status = STATUS[t.status] || 'failed';
       row.cells[t.projectName] = status;
-      if (status === 'failed') row.errors.push(`${t.projectName}: ${firstLine(last.error && last.error.message)}`);
+      if (status === 'failed') row.errors.push(`${t.projectName}: ${firstLine(last.error && last.error.message)}${detail(last.errors)}`);
     }
   }
   for (const s of suite.suites || []) collect(s, here, rows);
