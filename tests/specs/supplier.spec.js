@@ -135,6 +135,14 @@ test.describe('ספק', () => {
     }
   });
 
+  test('יצירת קוד לספק חדש, בתוקף ל-15 דקות', async ({ page }) => {
+    await openDemo(page, 'admin', 'settings');
+    await page.getByRole('button', { name: 'יצירת קוד', exact: true }).click();
+    await expect(page.getByLabel('הקוד')).toHaveText(/^[0-9A-Z]{6}$/);
+    await expect(page.getByRole('timer')).toContainText(/בתוקף עוד 1[45]:\d\d/);
+    await expect(page.getByRole('link', { name: 'שליחה בוואטסאפ' })).toHaveAttribute('href', /wa\.me/);
+  });
+
   test('שינוי שם העסק בהגדרות נשמר', async ({ page }) => {
     await openDemo(page, 'admin', 'settings');
     const name = page.getByLabel('שם העסק');
