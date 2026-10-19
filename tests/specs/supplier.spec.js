@@ -141,6 +141,10 @@ test.describe('ספק', () => {
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
     await shop.getByLabel('התמונה של העסק שלי').setInputFiles({ name: 'shop.png', mimeType: 'image/png', buffer: png });
     await expect(shop.locator('.sup-me img.st-pic')).toBeVisible();
+    // Still there after going to another tab and back.
+    await shop.locator('a[href="#/history"]').click();
+    await shop.locator('a[href="#/suppliers"]').click();
+    await expect(shop.locator('.sup-me img.st-pic')).toBeVisible();
     await page.reload();
     await expect(page.locator('.st-card', { hasText: 'חנות לדוגמה' }).locator('img.st-pic')).toBeVisible();
   });
