@@ -116,7 +116,7 @@ test.describe('ספק', () => {
     await expect(status).toHaveText('פעילה');
   });
 
-  test('חנויות ככרטיסים: לחיצה פותחת פרטים, ואפשר להעלות תמונת עסק', async ({ page }) => {
+  test('חנויות ככרטיסים: לחיצה פותחת פרטים, קישור הצטרפות רק לחנות שעוד לא הצטרפה', async ({ page, context }) => {
     await openDemo(page, 'admin', 'stores');
     const cards = page.locator('.st-card');
     await expect(cards).toHaveCount(2);
@@ -126,14 +126,23 @@ test.describe('ספק', () => {
     await expect(card.locator('.st-init')).toHaveText('ח');
     await openStore(page, 'חנות לדוגמה');
     await expect(card.locator('.st-facts')).toContainText('הזמנות');
-    // A tiny PNG as the business picture.
-    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
-    await card.getByLabel('תמונת העסק של חנות לדוגמה').setInputFiles({ name: 'shop.png', mimeType: 'image/png', buffer: png });
-    await expect(card.locator('img.st-pic')).toBeVisible();
-    await expect(card.getByText('החלפת תמונה')).toBeVisible();
+    // Someone already joined this store, so no join link; the second store has none yet.
+    await expect(card.getByRole('button', { name: 'קישור הצטרפות' })).toHaveCount(0);
+    // The supplier does not upload the store's picture.
+    await expect(card.locator('input[type=file]')).toHaveCount(0);
     // Tapping again closes it.
     await card.locator('.st-head').click();
     await expect(card.getByRole('button', { name: 'עריכה' })).toHaveCount(0);
+    await expect((await openStore(page, 'חנות שנייה')).getByRole('button', { name: 'קישור הצטרפות' })).toBeVisible();
+
+    // The store uploads its own picture, and the supplier sees it on the card.
+    const shop = await context.newPage();
+    await openDemo(shop, 'store', 'suppliers');
+    const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+    await shop.getByLabel('התמונה של העסק שלי').setInputFiles({ name: 'shop.png', mimeType: 'image/png', buffer: png });
+    await expect(shop.locator('.sup-me img.st-pic')).toBeVisible();
+    await page.reload();
+    await expect(page.locator('.st-card', { hasText: 'חנות לדוגמה' }).locator('img.st-pic')).toBeVisible();
   });
 
   test('חיפוש בקטלוג', async ({ page }) => {

@@ -197,3 +197,16 @@ input,select,textarea{border-radius:10px}
 .st-actions .btn{justify-content:center}
 .st-actions label.btn{cursor:pointer;position:relative}
 .st-actions label.btn.busy{opacity:.6}
+/* 2.4: iPhone zooms the page in when a box with text under 16px is tapped, and the page then looks shifted and cut. */
+@media (max-width:760px){input,select,textarea{font-size:16px!important}}
+/* 2.4: my suppliers */
+.sup-page{display:grid;gap:12px}
+.sup-page h1{margin:0}
+.sup-go{flex:none;font-weight:600;color:var(--accent);font-size:14px}
+.sup-add{padding:14px 16px;display:grid;gap:4px}
+.sup-add p{margin:0}
+.tabs a{position:relative}
+.sup-me{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.sup-me label.btn{cursor:pointer;flex:none}
+.sup-me label.btn.busy{opacity:.6}
+.st-facts a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}

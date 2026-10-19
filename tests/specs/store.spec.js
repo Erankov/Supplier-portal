@@ -133,6 +133,28 @@ test.describe('חנות', () => {
     await expect(line.locator('td').last()).toContainText('420');
   });
 
+  test('הספקים שלי: רואים את הספקים שהחנות מחוברת אליהם', async ({ page }) => {
+    await openDemo(page, 'store');
+    await page.getByRole('link', { name: /הספקים שלי/ }).click();
+    await expect(page.getByRole('heading', { name: 'הספקים שלי' })).toBeVisible();
+    const card = page.locator('.sup-page .st-card');
+    await expect(card).toHaveCount(1);
+    await expect(card).toContainText('ספק לדוגמה');
+    await expect(card).toContainText('מזמינים ממנו עכשיו');
+    await expect(page.getByText('עובדים עם ספק נוסף?')).toBeVisible();
+    await card.locator('.st-head').click();
+    await expect(page.locator('.plist li').first()).toBeVisible();
+  });
+
+  test('בטלפון תיבות הטקסט בגודל 16 לפחות, כדי שהאייפון לא יגדיל את הדף', async ({ page }, testInfo) => {
+    test.skip(!isPhone(testInfo), 'בדיקה לטלפון בלבד');
+    await openDemo(page, 'store');
+    await page.locator('.cart-bar').click();
+    const small = await page.evaluate(() => [...document.querySelectorAll('input,textarea,select')]
+      .filter(e => parseFloat(getComputedStyle(e).fontSize) < 16).map(e => e.getAttribute('aria-label') || e.placeholder || e.tagName));
+    expect(small).toEqual([]);
+  });
+
   test('כמות: הקלדה, הוצאה מהעגלה וביטול', async ({ page }) => {
     await openDemo(page, 'store');
     const item = product(page, '6295-753');
