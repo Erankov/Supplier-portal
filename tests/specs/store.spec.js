@@ -76,6 +76,30 @@ test.describe('חנות', () => {
     await expect(cart.locator('.clist li')).toHaveCount(lines);
   });
 
+  test('כמות: הקלדה, הוצאה מהעגלה וביטול', async ({ page }) => {
+    await openDemo(page, 'store');
+    const item = product(page, '6295-753');
+    await item.getByRole('button', { name: /הוספת/ }).click();
+    const box = item.locator('.stepper input');
+    await expect(box).toHaveAttribute('inputmode', 'numeric');
+
+    // Clearing the box to type a new amount does not drop the product.
+    await box.fill('');
+    await box.blur();
+    await expect(box).toHaveValue('1');
+    await box.fill('7');
+    await box.press('Enter');
+    await expect(box).toHaveValue('7');
+
+    // Minus at 1 is a remove button, and the toast offers to undo it.
+    await box.fill('1');
+    await box.blur();
+    await item.getByRole('button', { name: 'הוצאה מהעגלה' }).click();
+    await expect(item).not.toHaveClass(/in/);
+    await page.getByRole('button', { name: 'ביטול' }).click();
+    await expect(item.locator('.stepper input')).toHaveValue('1');
+  });
+
   test('מועדפים', async ({ page }) => {
     await openDemo(page, 'store');
     const star = product(page, '6295-753').locator('.fav');

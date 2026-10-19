@@ -146,3 +146,7 @@ input,select,textarea{border-radius:10px}
 .price-in{width:7.5em}
 /* 1.7: supplier code */
 .code-big{font:700 2.2rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.25em;text-align:center;padding:14px;border-radius:12px;background:var(--accent-soft,#eef4fb)}
+/* 1.8: remove button at 1, undo in the toast */
+.stepper button.rm{color:var(--danger);display:flex;align-items:center;justify-content:center}
+.toast.has-action{display:flex!important;align-items:center;gap:14px}
+.toast-act{background:none;border:0;color:#9DC3EA;font:inherit;font-weight:700;padding:6px 4px;cursor:pointer}
