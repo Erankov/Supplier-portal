@@ -154,6 +154,23 @@ test.describe('ספק', () => {
     }
   });
 
+  test('בטלפון צר הדף לא זז לצדדים, ורק התפריט למטה נגלל', async ({ page }, testInfo) => {
+    test.skip(!isPhone(testInfo), 'בדיקה לטלפון בלבד');
+    // Narrower than the menu, like a small phone or bigger text.
+    await page.setViewportSize({ width: 300, height: 700 });
+    await openDemo(page, 'admin');
+    await expect(page.locator('.page h1')).toBeVisible();
+    const r = await page.evaluate(() => {
+      window.scrollTo(200, 0);
+      const s = document.querySelector('.side');
+      s.scrollLeft = -200;
+      return { page: window.scrollX, wide: s.scrollWidth > s.clientWidth, menu: s.scrollLeft };
+    });
+    expect(r.page, 'הדף זז לצדדים').toBe(0);
+    expect(r.wide).toBe(true);
+    expect(r.menu, 'התפריט נגלל').not.toBe(0);
+  });
+
   test('יצירת קוד לספק חדש, בתוקף ל-15 דקות', async ({ page }) => {
     await openDemo(page, 'admin', 'settings');
     await page.getByRole('button', { name: 'יצירת קוד', exact: true }).click();

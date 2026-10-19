@@ -166,3 +166,11 @@ input,select,textarea{border-radius:10px}
 .pk-set legend{padding:0 6px;font-weight:600;font-size:14px}
 .pk-ok{color:var(--ok)}
 .pk-warn{color:var(--danger,#B42318)}
+/* 2.1: on a phone the page never moves sideways; only the bottom menu scrolls, inside itself */
+@media (max-width:760px){
+ html{overflow-x:hidden}
+ @supports (overflow:clip){html,body{overflow-x:clip}}
+ .side{overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;scrollbar-width:none;justify-content:flex-start}
+ .side::-webkit-scrollbar{display:none}
+ .side-links{flex:1 0 auto;grid-auto-columns:minmax(64px,1fr)}
+}
