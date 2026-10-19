@@ -76,6 +76,24 @@ test.describe('חנות', () => {
     await expect(cart.locator('.clist li')).toHaveCount(lines);
   });
 
+  test('ההזמנה הקבועה שלי ממלאת את העגלה כמו בפעם הקודמת', async ({ page }, testInfo) => {
+    await openDemo(page, 'store');
+    const reg = page.locator('.reg');
+    await expect(reg.getByText('ההזמנה הקבועה שלי')).toBeVisible();
+    const items = reg.locator('.rlist li');
+    // Only the first 4 show until asked for more.
+    await expect(items).toHaveCount(4);
+    await reg.getByRole('button', { name: /עוד \d+ מוצרים/ }).click();
+    const n = await items.count();
+    expect(n).toBeGreaterThan(4);
+    const last = Number((await items.first().locator('.last').innerText()).match(/\d+/)[0]);
+    await reg.getByRole('button', { name: 'למלא כמו בפעם הקודמת' }).click();
+    await expect(reg.getByRole('button', { name: /כבר כמו בפעם הקודמת/ })).toBeDisabled();
+    await expect(items.first().locator('.stepper input')).toHaveValue(String(last));
+    const cart = await openCart(page, testInfo);
+    await expect(cart.locator('.clist li')).toHaveCount(n);
+  });
+
   test('כמות: הקלדה, הוצאה מהעגלה וביטול', async ({ page }) => {
     await openDemo(page, 'store');
     const item = product(page, '6295-753');
