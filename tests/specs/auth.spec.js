@@ -70,7 +70,8 @@ test.describe('כניסה והרשמה', () => {
     test.beforeEach(async ({ page }) => {
       calls = await blockServer(page);
       await page.goto('/');
-      await page.getByText('ספק חדש? יצירת חשבון').click();
+      await page.getByText('קיבלתם קוד? פתיחת חשבון').click();
+      await page.getByLabel('הקוד שקיבלתם').fill('abc234');
       await page.locator('input[type=email]').fill('test@example.com');
     });
     const fields = page => page.locator('input[autocomplete=new-password]');
@@ -112,6 +113,23 @@ test.describe('כניסה והרשמה', () => {
       await page.getByRole('button', { name: 'יצירת חשבון' }).click();
       await expect.poll(() => signups().length).toBe(1);
       expect(decodeURIComponent(signups()[0])).toContain('?join=TESTCODE');
+    });
+
+    test('בלי הקוד שקיבלו אי אפשר ליצור חשבון', async ({ page }) => {
+      await page.getByLabel('הקוד שקיבלתם').fill('');
+      await fields(page).nth(0).fill('abcd1234');
+      await fields(page).nth(1).fill('abcd1234');
+      await page.getByRole('button', { name: 'יצירת חשבון' }).click();
+      await expect(page.locator('.toast')).toContainText('נא למלא את הקוד שקיבלתם');
+      expect(signups()).toHaveLength(0);
+    });
+
+    test('הקוד נשמר עד שהמייל מאושר', async ({ page }) => {
+      await fields(page).nth(0).fill('abcd1234');
+      await fields(page).nth(1).fill('abcd1234');
+      await page.getByRole('button', { name: 'יצירת חשבון' }).click();
+      await expect.poll(() => signups().length).toBe(1);
+      expect(await page.evaluate(() => localStorage.getItem('pending_join'))).toBe('ABC234');
     });
 
     test('סיסמה תקינה נשלחת להרשמה', async ({ page }) => {

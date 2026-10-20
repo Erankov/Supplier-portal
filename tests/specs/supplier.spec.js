@@ -214,12 +214,12 @@ test.describe('ספק', () => {
     expect(r.menu, 'התפריט נגלל').not.toBe(0);
   });
 
-  test('יצירת קוד לספק חדש, בתוקף ל-15 דקות', async ({ page }) => {
+  test('בעל האתר רואה בחשבון קישור לפניות ולקוחות עם מספר הפניות החדשות', async ({ page }) => {
     await openDemo(page, 'admin', 'account');
-    await page.getByRole('button', { name: 'יצירת קוד', exact: true }).click();
-    await expect(page.getByLabel('הקוד')).toHaveText(/^[0-9A-Z]{6}$/);
-    await expect(page.getByRole('timer')).toContainText(/בתוקף עוד 1[45]:\d\d/);
-    await expect(page.getByRole('link', { name: 'שליחה בוואטסאפ' })).toHaveAttribute('href', /wa\.me/);
+    const link = page.getByRole('link', { name: /פניות ולקוחות/ });
+    await expect(link).toContainText('3 פניות חדשות');
+    await link.click();
+    await expect(page.getByRole('heading', { name: 'פניות ולקוחות' })).toBeVisible();
   });
 
   test('הגדרות: טלפון או מייל לא תקינים לא נשמרים', async ({ page }) => {
