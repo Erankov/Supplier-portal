@@ -123,7 +123,7 @@ test.describe('ספק', () => {
     // Closed: no buttons yet, the first letter stands in for a picture.
     const card = cards.filter({ hasText: 'מרכול השכונה' });
     await expect(card.getByRole('button', { name: 'עריכה' })).toHaveCount(0);
-    await expect(card.locator('.st-init')).toHaveText('מ');
+    await expect(card.locator('img.st-pic')).toBeVisible();
     await openStore(page, 'מרכול השכונה');
     await expect(card.locator('.st-facts')).toContainText('הזמנות');
     // Someone already joined this store, so no join link; the second store has none yet.

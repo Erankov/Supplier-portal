@@ -18,12 +18,12 @@ test.describe('חנות', () => {
     await expect(page.locator('.modal')).toHaveCount(0);
     // The supplier cancels this store's open order (in the demo data).
     const num = await page.evaluate(() => {
-      const w = JSON.parse(localStorage.getItem('demo_world_v1'));
+      const w = JSON.parse(localStorage.getItem('demo_world_v2'));
       const db = w.dbs[0];
       const store = db.stores.find(s => s.name === 'מרכול השכונה');
       const o = db.orders.find(x => x.store_id === store.id && x.status === 'new');
       o.status = 'cancelled';
-      localStorage.setItem('demo_world_v1', JSON.stringify(w));
+      localStorage.setItem('demo_world_v2', JSON.stringify(w));
       return o.number;
     });
     await page.reload();
@@ -104,6 +104,27 @@ test.describe('חנות', () => {
     await expect(supplier.getByRole('heading', { name: 'הזמנה ' + number })).toBeVisible();
     await expect(supplier.locator('.page')).toContainText('בלי מדבקות');
     await expect(supplier.locator('.page')).toContainText('בדיקה אוטומטית');
+  });
+
+  test('לכל ספק עגלה משלו: מעבר בין ספקים לא מערבב את העגלות', async ({ page }, testInfo) => {
+    await openDemo(page, 'store');
+    const toSupplier = async name => {
+      await page.getByRole('link', { name: /הספקים שלי/ }).click();
+      await page.locator('.sup-page .st-card', { hasText: name }).locator('.st-head').click();
+      await expect(page.locator('.shop-brand')).toContainText(name);
+      await expect(page.locator('.plist li').first()).toBeVisible();
+    };
+    await product(page, '6295-753').getByRole('button', { name: /הוספת/ }).click();
+    await toSupplier('משקאות הצפון');
+    let cart = await openCart(page, testInfo);
+    await expect(cart).not.toContainText('6295-753');
+    await page.reload();
+    await expect(page.locator('.plist li').first()).toBeVisible();
+    await product(page, '301').getByRole('button', { name: /הוספת/ }).click();
+    await toSupplier('קלין פרו ציוד ניקוי');
+    cart = await openCart(page, testInfo);
+    await expect(cart).toContainText('סבון כללי 1 ליטר');
+    await expect(cart).not.toContainText('קולה');
   });
 
   test('הזמנות קודמות והזמנה חוזרת', async ({ page }, testInfo) => {

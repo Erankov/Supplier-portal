@@ -1,7 +1,7 @@
 # Static site: no build step, publish the site/ folder.
-# Skip deploys when nothing under site/ changed (e.g. a test report commit).
+# Skip only the test-report commits the CI pushes ("[skip ci]"). A diff-based rule skipped release 2.9 because it was pushed as a merge commit.
 # The repo is public so Netlify's free plan deploys commits from any author (a private repo only deploys the owner's commits).
 [build]
   publish = "site"
   command = ""
-  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- site/ netlify.toml"
+  ignore = "git log -1 --pretty=%s | grep -q 'skip ci'"
