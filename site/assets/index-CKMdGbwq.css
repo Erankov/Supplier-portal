@@ -233,3 +233,39 @@ input[aria-invalid="true"]{border-color:var(--danger);box-shadow:0 0 0 1px var(-
 .sup-stats{font-size:14px;color:var(--muted,#5B6472)}
 .sup-stats b{color:var(--ink)}
 .sup-info .st-facts{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px 14px}
+/* 2.13: bottom menu with names on the store side, "my account", phone header for suppliers */
+.sw-btn{margin-inline-start:auto;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.m-head{display:none}
+.acct{max-width:640px}
+.acct h1{margin:0}
+.acct-links{display:grid;padding:0}
+.acct-links a{display:flex;align-items:center;gap:12px;min-height:56px;padding:0 16px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--line)}
+.acct-links a:last-child{border-bottom:0}
+.acct-links a:hover{background:var(--soft)}
+.acct-links a>svg:first-child{color:var(--muted);flex:none}
+.acct-links a>svg:last-child{color:var(--muted);flex:none}
+.acct-links .al-t{flex:1;font-weight:500}
+.acct-out{justify-content:center;min-height:52px;color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,transparent);font-weight:700}
+.acct-out:hover{background:color-mix(in srgb,var(--danger) 8%,transparent)}
+.acct .sup-page{display:grid;gap:16px}
+@media (max-width:760px){
+ .m-head{display:flex;align-items:center;gap:10px;padding:10px 16px;padding-top:max(10px,env(safe-area-inset-top));background:var(--surface);border-bottom:1px solid var(--line)}
+ .m-head b{font-size:16px}
+ .shop-top .tabs{position:fixed;inset-inline:0;bottom:0;z-index:45;box-sizing:border-box;height:calc(64px + env(safe-area-inset-bottom));align-items:stretch;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(16,24,40,.06);padding:6px 4px calc(6px + env(safe-area-inset-bottom))}
+ .shop-top .tabs a{position:relative;flex-direction:column;justify-content:center;gap:3px;padding:2px;min-height:0;font-size:11px;text-align:center;line-height:1.2;border-radius:0;background:none}
+ .shop-top .tabs a span{display:block}
+ .shop-top .tabs a svg{width:22px;height:22px}
+ .shop-top .tabs a.on{background:none;color:var(--accent);font-weight:700}
+ .shop-top .tabs a.on:before{content:"";position:absolute;inset-inline:30%;top:-6px;height:3px;border-radius:0 0 3px 3px;background:var(--accent)}
+ .shop-top .tabs a span.count{display:grid;position:absolute;top:1px;left:calc(50% + 4px);min-width:18px;height:18px;font-size:11px;box-shadow:0 0 0 2px var(--surface)}
+ .shop-top .shop-brand{min-width:0;flex:1}
+ /* the fixed menu lives inside the sticky header, so the header must sit above the cart */
+ .shop-top{z-index:41}
+ .cart{bottom:calc(64px + env(safe-area-inset-bottom))}
+ .cart{transform:translateY(calc(100% - 68px))}
+ .cart.up{transform:none}
+ .cart{max-height:calc(86vh - 64px);max-height:calc(86dvh - 64px)}
+ .shop-body{padding-bottom:170px}
+ .toast{bottom:calc(150px + env(safe-area-inset-bottom))}
+}
+.back{min-height:44px;color:var(--accent);font-weight:500;font-size:15px;text-decoration:none}

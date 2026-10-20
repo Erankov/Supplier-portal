@@ -26,7 +26,7 @@ test.describe('ספק', () => {
       const box = await page.locator('.side').boundingBox();
       expect(box.y + box.height).toBeGreaterThan(page.viewportSize().height - 5);
     }
-    for (const [link, heading] of [['חנויות', 'חנויות'], ['קטלוג ומחירים', 'קטלוג ומחירים'], ['הגדרות', 'הגדרות'], ['הזמנות', 'הזמנות']]) {
+    for (const [link, heading] of [['חנויות', 'חנויות'], ['קטלוג ומחירים', 'קטלוג ומחירים'], ['החשבון שלי', 'החשבון שלי'], ['הזמנות', 'הזמנות']]) {
       await nav(page, link).click();
       await expect(page.getByRole('heading', { name: heading, exact: true })).toBeVisible();
       await expect(nav(page, link)).toHaveClass(/on/);
@@ -137,13 +137,13 @@ test.describe('ספק', () => {
 
     // The store uploads its own picture, and the supplier sees it on the card.
     const shop = await context.newPage();
-    await openDemo(shop, 'store', 'suppliers');
+    await openDemo(shop, 'store', 'account');
     const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
     await shop.getByLabel('התמונה של העסק שלי').setInputFiles({ name: 'shop.png', mimeType: 'image/png', buffer: png });
     await expect(shop.locator('.sup-me img.st-pic')).toBeVisible();
     // Still there after going to another tab and back.
     await shop.locator('a[href="#/history"]').click();
-    await shop.locator('a[href="#/suppliers"]').click();
+    await shop.locator('a[href="#/account"]').click();
     await expect(shop.locator('.sup-me img.st-pic')).toBeVisible();
     await page.reload();
     await expect(page.locator('.st-card', { hasText: 'מרכול השכונה' }).locator('img.st-pic')).toBeVisible();
@@ -189,7 +189,7 @@ test.describe('ספק', () => {
   test('בטלפון הדפים לא רחבים מהמסך', async ({ page }, testInfo) => {
     test.skip(!isPhone(testInfo), 'בדיקה לטלפון בלבד');
     await openDemo(page, 'admin');
-    for (const link of ['הזמנות', 'חנויות', 'קטלוג ומחירים', 'הגדרות']) {
+    for (const link of ['הזמנות', 'חנויות', 'קטלוג ומחירים', 'החשבון שלי']) {
       await nav(page, link).click();
       await expect(page.locator('.page h1')).toBeVisible();
       const [doc, screen] = await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]);
@@ -200,7 +200,7 @@ test.describe('ספק', () => {
   test('בטלפון צר הדף לא זז לצדדים, ורק התפריט למטה נגלל', async ({ page }, testInfo) => {
     test.skip(!isPhone(testInfo), 'בדיקה לטלפון בלבד');
     // Narrower than the menu, like a small phone or bigger text.
-    await page.setViewportSize({ width: 300, height: 700 });
+    await page.setViewportSize({ width: 240, height: 700 });
     await openDemo(page, 'admin');
     await expect(page.locator('.page h1')).toBeVisible();
     const r = await page.evaluate(() => {
@@ -215,7 +215,7 @@ test.describe('ספק', () => {
   });
 
   test('יצירת קוד לספק חדש, בתוקף ל-15 דקות', async ({ page }) => {
-    await openDemo(page, 'admin', 'settings');
+    await openDemo(page, 'admin', 'account');
     await page.getByRole('button', { name: 'יצירת קוד', exact: true }).click();
     await expect(page.getByLabel('הקוד')).toHaveText(/^[0-9A-Z]{6}$/);
     await expect(page.getByRole('timer')).toContainText(/בתוקף עוד 1[45]:\d\d/);
@@ -246,6 +246,45 @@ test.describe('ספק', () => {
     await card.locator('.st-head').click();
     await expect(card).toContainText('הרצל 45, רמת גן');
     await expect(card).toContainText('א׳-ה׳ 7:00-22:00');
+  });
+
+  test('החשבון שלי: הגדרות וחזרה, והתנתקות רק אחרי אישור', async ({ page }) => {
+    await openDemo(page, 'admin');
+    await nav(page, 'החשבון שלי').click();
+    await expect(page.getByRole('heading', { name: 'החשבון שלי' })).toBeVisible();
+    await expect(page.getByText('demo@example.com')).toBeVisible();
+    await page.getByRole('link', { name: /הגדרות העסק/ }).click();
+    await expect(page.getByRole('heading', { name: 'הגדרות העסק' })).toBeVisible();
+    await expect(nav(page, 'החשבון שלי')).toHaveClass(/on/);
+    await page.getByRole('link', { name: 'חזרה' }).click();
+    await expect(page.getByRole('heading', { name: 'החשבון שלי' })).toBeVisible();
+    // Logging out asks first; "חזרה" keeps you logged in.
+    await page.getByRole('button', { name: 'התנתקות מהחשבון' }).click();
+    const ask = page.getByRole('dialog', { name: 'אישור' });
+    await expect(ask).toContainText('להתנתק מהחשבון?');
+    await ask.getByRole('button', { name: 'חזרה' }).click();
+    await expect(ask).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'החשבון שלי' })).toBeVisible();
+    await page.getByRole('button', { name: 'התנתקות מהחשבון' }).click();
+    await page.getByRole('dialog', { name: 'אישור' }).getByRole('button', { name: 'התנתקות' }).click();
+    await expect(page.getByRole('button', { name: /כניסה כספק/ })).toBeVisible();
+  });
+
+  test('כפתור החזרה של הטלפון סוגר חלון פתוח בלי לצאת מהמסך', async ({ page }) => {
+    await openDemo(page, 'admin', 'stores');
+    await page.getByRole('button', { name: 'הוספת חנות' }).click();
+    await expect(page.getByRole('dialog', { name: 'חנות חדשה' })).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'חנויות', exact: true })).toBeVisible();
+    // Closing with the X does not leave an extra step behind.
+    await page.getByRole('button', { name: 'הוספת חנות' }).click();
+    await page.getByRole('button', { name: 'סגירה' }).click();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await nav(page, 'קטלוג ומחירים').click();
+    await expect(page.getByRole('heading', { name: 'קטלוג ומחירים', exact: true })).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole('heading', { name: 'חנויות', exact: true })).toBeVisible();
   });
 
   test('שינוי שם העסק בהגדרות נשמר', async ({ page }) => {

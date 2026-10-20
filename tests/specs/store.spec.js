@@ -254,7 +254,7 @@ test.describe('חנות', () => {
 
   test('פרטי העסק שלי: מייל וטלפון לא תקינים לא נשמרים, ותקינים נשמרים', async ({ page }) => {
     await openDemo(page, 'store');
-    await page.getByRole('link', { name: /הספקים שלי/ }).click();
+    await page.getByRole('link', { name: 'החשבון שלי' }).click();
     const biz = page.getByRole('region', { name: 'פרטי העסק שלי' });
     await expect(biz).toContainText('הרצל 45, רמת גן');
     await biz.getByRole('button', { name: 'עריכה' }).click();
@@ -287,6 +287,46 @@ test.describe('חנות', () => {
     await page.getByLabel('טלפון').fill('03-6123456');
     await page.getByRole('button', { name: 'הצטרפות' }).click();
     await expect(page.getByText('הצטרפתם בהצלחה')).toBeVisible();
+  });
+
+  test('תפריט עם שמות, החלפת ספק מלמעלה, והתנתקות רק אחרי אישור', async ({ page }, testInfo) => {
+    await openDemo(page, 'store');
+    const menu = page.getByRole('navigation', { name: 'תפריט' });
+    for (const name of ['הזמנה', 'ההזמנות שלי', 'הספקים שלי', 'החשבון שלי'])
+      await expect(menu.getByRole('link', { name: new RegExp(name) })).toBeVisible();
+    if (isPhone(testInfo)) {
+      // On a phone the menu is a bar fixed to the bottom, with the cart bar above it.
+      const box = await menu.boundingBox();
+      expect(box.y + box.height).toBeGreaterThan(page.viewportSize().height - 5);
+      const cart = await page.locator('.cart-bar').boundingBox();
+      expect(cart.y + cart.height).toBeLessThanOrEqual(box.y + 1);
+    }
+    await expect(page.locator('.shop-top')).toContainText('מזמינים בשם מרכול השכונה');
+    await page.getByRole('link', { name: 'החלפת ספק' }).click();
+    await expect(page.getByRole('heading', { name: 'הספקים שלי' })).toBeVisible();
+    await menu.getByRole('link', { name: 'החשבון שלי' }).click();
+    await expect(page.getByRole('heading', { name: 'החשבון שלי' })).toBeVisible();
+    await page.getByRole('button', { name: 'התנתקות מהחשבון' }).click();
+    const ask = page.getByRole('dialog', { name: 'אישור' });
+    await ask.getByRole('button', { name: 'חזרה' }).click();
+    await expect(page.getByRole('heading', { name: 'החשבון שלי' })).toBeVisible();
+    await page.getByRole('button', { name: 'התנתקות מהחשבון' }).click();
+    await page.getByRole('dialog', { name: 'אישור' }).getByRole('button', { name: 'התנתקות' }).click();
+    await expect(page.getByRole('button', { name: /כניסה כחנות/ })).toBeVisible();
+  });
+
+  test('בטלפון כפתור החזרה סוגר את העגלה ולא יוצא מהמסך', async ({ page }, testInfo) => {
+    test.skip(!isPhone(testInfo), 'בדיקה לטלפון בלבד');
+    await openDemo(page, 'store');
+    await page.getByRole('link', { name: 'ההזמנות שלי' }).click();
+    await page.getByRole('link', { name: 'הזמנה', exact: true }).click();
+    await page.locator('.cart-bar').click();
+    await expect(page.locator('.cart.up')).toHaveCount(1);
+    await page.goBack();
+    await expect(page.locator('.cart.up')).toHaveCount(0);
+    await expect(page.locator('.plist li').first()).toBeVisible();
+    await page.goBack();
+    await expect(page.locator('.my-orders')).toBeVisible();
   });
 
   test('בטלפון תיבות הטקסט בגודל 16 לפחות, כדי שהאייפון לא יגדיל את הדף', async ({ page }, testInfo) => {
