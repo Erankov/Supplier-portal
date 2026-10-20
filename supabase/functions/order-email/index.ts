@@ -76,10 +76,11 @@ Deno.serve(async (req) => {
     const { data: { user } } = await asUser.auth.getUser();
     if (!user) return json({ error: "not signed in" }, 401);
 
-    const db = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: o } = await db.from("orders")
+    // Read as the store user (RLS lets a store read its own orders and its supplier's order email).
+    const { data: o, error } = await asUser.from("orders")
       .select("id, number, note, total, created_at, created_by, stores(name, contact, phone), suppliers(name, order_email), order_lines(id, sku, name, qty, price, note, packs, pack_size, pack_price)")
       .eq("id", order_id).single();
+    if (error) console.error("order-email: read order", order_id, error.message);
     // Only the person who placed it, and only right after (so the link can't be replayed to spam).
     if (!o || o.created_by !== user.id) return json({ error: "forbidden" }, 403);
     if (Date.now() - new Date(o.created_at).getTime() > 10 * 60 * 1000) return json({ error: "too old" }, 400);
