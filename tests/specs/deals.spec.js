@@ -97,6 +97,13 @@ test.describe('קרוסלת מבצעים בלי תנועה', () => {
     await expect(page.locator('.dl-live')).toHaveCount(1);
   });
 
+  test('ספק: לחיצה על פרסום בלי מוצר מראה מה חסר', async ({ page }) => {
+    await openDemo(page, 'admin', 'deals');
+    await page.locator('.dl-form').getByRole('button', { name: 'פרסום המבצע' }).click();
+    await expect(page.locator('.toast')).toContainText('בחרו מוצר מהקטלוג');
+    await expect(page.getByLabel('מוצר מהקטלוג')).toBeFocused();
+  });
+
   test('ספק: עד 3 מבצעים פעילים', async ({ page }) => {
     await openDemo(page, 'admin', 'deals');
     for (let k = 0; k < 2; k++) {
