@@ -134,3 +134,14 @@ test.describe('פניות, קודים ותשלומים', () => {
     await expect(page.locator('.ld-head .ld-badge')).toHaveText('לקוח רשום');
   });
 });
+
+test('בהתראה על התשלום יש כפתור וואטסאפ לבעל האתר', async ({ page, context }) => {
+  const ymd = d => { const x = new Date(); x.setDate(x.getDate() + d); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+  await openDemo(page, 'admin', 'leads/l5');
+  await page.getByLabel('מועד התשלום הבא').fill(ymd(-1));
+  await page.getByRole('button', { name: 'שמירת המועד' }).click();
+  await expect(page.locator('.ld-head .ld-badge')).toHaveText('באיחור');
+  const store = await context.newPage();
+  await openDemo(store, 'store');
+  await expect(store.getByRole('dialog').getByRole('link', { name: 'יצירת קשר בוואטסאפ לתשלום' })).toHaveAttribute('href', /^https:\/\/wa\.me\/972543455648\?text=/);
+});
