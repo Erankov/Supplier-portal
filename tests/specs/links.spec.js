@@ -6,8 +6,8 @@ test.describe('רשימת ספקים ובקשות הצטרפות', () => {
     await openDemo(page, 'store', 'suppliers');
     await page.getByRole('link', { name: 'הוספת ספק' }).click();
     await expect(page.getByRole('heading', { name: 'הוספת ספק' })).toBeVisible();
-    // The 5 suppliers the store already works with, plus 2 more.
-    await expect(page.locator('.sd-card')).toHaveCount(7);
+    // The 5 suppliers the store already works with, plus 5 more.
+    await expect(page.locator('.sd-card')).toHaveCount(10);
     await expect(page.locator('.sd-card', { hasText: 'מחובר' })).toHaveCount(5);
 
     await page.getByLabel('חיפוש ספק').fill('קצרין');
