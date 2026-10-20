@@ -59,6 +59,12 @@ test.describe('כניסה והרשמה', () => {
     });
   }
 
+  test('כניסה מקישור עם ?join= שומרת את קוד ההצטרפות', async ({ page }) => {
+    await blockServer(page);
+    await page.goto('/?join=ABC123');
+    expect(await page.evaluate(() => localStorage.getItem('pending_invite'))).toBe('ABC123');
+  });
+
   test.describe('הרשמה', () => {
     let calls;
     test.beforeEach(async ({ page }) => {
@@ -97,6 +103,15 @@ test.describe('כניסה והרשמה', () => {
       await page.getByRole('button', { name: 'יצירת חשבון' }).click();
       await expect(page.locator('.toast')).toContainText('לא זהות');
       expect(signups()).toHaveLength(0);
+    });
+
+    test('קישור אישור המייל שומר את קוד ההצטרפות של החנות', async ({ page }) => {
+      await page.evaluate(() => localStorage.setItem('pending_invite', 'TESTCODE'));
+      await fields(page).nth(0).fill('abcd1234');
+      await fields(page).nth(1).fill('abcd1234');
+      await page.getByRole('button', { name: 'יצירת חשבון' }).click();
+      await expect.poll(() => signups().length).toBe(1);
+      expect(decodeURIComponent(signups()[0])).toContain('?join=TESTCODE');
     });
 
     test('סיסמה תקינה נשלחת להרשמה', async ({ page }) => {
