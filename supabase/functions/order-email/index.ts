@@ -6,8 +6,11 @@ import nodemailer from "npm:nodemailer@6.9.14";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+// Echo whatever headers the browser asks for (supabase-js adds its own x-* headers).
+const preflight = (req: Request) => new Response("ok", { headers: { ...cors,
+  "Access-Control-Allow-Headers": req.headers.get("Access-Control-Request-Headers") ?? "authorization, x-client-info, apikey, content-type" } });
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...cors, "Content-Type": "application/json" } });
 const esc = (s: unknown) =>
@@ -15,7 +18,7 @@ const esc = (s: unknown) =>
 const ils = (n: number) => "₪" + Number(n || 0).toLocaleString("he-IL", { maximumFractionDigits: 2 });
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+  if (req.method === "OPTIONS") return preflight(req);
   try {
     const { order_id } = await req.json();
     const url = Deno.env.get("SUPABASE_URL")!;
@@ -60,6 +63,7 @@ Deno.serve(async (req) => {
     });
     return json({ sent: true });
   } catch (e) {
+    console.error("order-email:", e?.message ?? e);
     return json({ error: String(e?.message ?? e) }, 500);
   }
 });

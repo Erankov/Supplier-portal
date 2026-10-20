@@ -12,6 +12,31 @@ async function openCart(page, testInfo) {
 }
 
 test.describe('חנות', () => {
+  test('כשהספק מבטל הזמנה, החנות מקבלת הודעה עד שלוחצת "הבנתי"', async ({ page }) => {
+    await openDemo(page, 'store');
+    await expect(page.locator('.plist li').first()).toBeVisible();
+    await expect(page.locator('.modal')).toHaveCount(0);
+    // The supplier cancels this store's open order (in the demo data).
+    const num = await page.evaluate(() => {
+      const db = JSON.parse(localStorage.getItem('demo_db_v1'));
+      const store = db.stores.find(s => s.name === 'חנות לדוגמה');
+      const o = db.orders.find(x => x.store_id === store.id && x.status === 'new');
+      o.status = 'cancelled';
+      localStorage.setItem('demo_db_v1', JSON.stringify(db));
+      return o.number;
+    });
+    await page.reload();
+    const modal = page.locator('.modal');
+    await expect(modal).toContainText('הזמנה מספר ' + num);
+    await expect(modal).toContainText('בוטלה על ידי הספק');
+    await expect(modal).toContainText('נא ליצור קשר עם ספק לדוגמה');
+    await modal.getByRole('button', { name: 'הבנתי' }).click();
+    await expect(page.locator('.modal')).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator('.plist li').first()).toBeVisible();
+    await expect(page.locator('.modal')).toHaveCount(0);
+  });
+
   test('חיפוש מוצר לפי שם או מק״ט', async ({ page }) => {
     await openDemo(page, 'store');
     await page.getByLabel('חיפוש מוצר').fill('6295-753');
