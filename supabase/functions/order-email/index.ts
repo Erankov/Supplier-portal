@@ -1,8 +1,8 @@
 // Emails the supplier a new order. The store's browser calls this right after place_order.
 // Secrets (Supabase > Edge Functions > Secrets): GMAIL_USER, GMAIL_APP_PASSWORD.
-// Sends through Gmail on port 465 (edge functions can't use 25 or 587).
+// Sends through Gmail on port 465 (edge functions can't use 25 or 587) with a tiny SMTP client:
+// nodemailer hung inside the edge runtime.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
-import nodemailer from "npm:nodemailer@6.9.14";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -17,10 +17,58 @@ const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const ils = (n: number) => "₪" + Number(n || 0).toLocaleString("he-IL", { maximumFractionDigits: 2 });
 
+const b64 = (t: string) => {
+  const b = new TextEncoder().encode(t);
+  let bin = "";
+  for (let i = 0; i < b.length; i += 8192) bin += String.fromCharCode(...b.subarray(i, i + 8192));
+  return btoa(bin);
+};
+async function sendGmail(user: string, pass: string, from: string, to: string, subject: string, html: string) {
+  const conn = await Deno.connectTls({ hostname: "smtp.gmail.com", port: 465 });
+  const enc = new TextEncoder(), dec = new TextDecoder();
+  let buf = "";
+  const read = async (want: string) => {
+    for (;;) {
+      const m = buf.match(/^(\d{3}) .*\r\n/m);
+      if (m) {
+        const end = buf.indexOf(m[0]) + m[0].length, all = buf.slice(0, end);
+        buf = buf.slice(end);
+        if (!all.startsWith(want) && !m[1].startsWith(want)) throw new Error("SMTP " + all.trim());
+        return all;
+      }
+      const chunk = new Uint8Array(4096), n = await conn.read(chunk);
+      if (n === null) throw new Error("SMTP closed");
+      buf += dec.decode(chunk.subarray(0, n));
+    }
+  };
+  const cmd = async (line: string, want: string) => { console.log("smtp: waiting for " + want); await conn.write(enc.encode(line + "\r\n")); return read(want); };
+  try {
+    await read("220");
+    await cmd("EHLO supplier-orders", "250");
+    await cmd("AUTH LOGIN", "334");
+    await cmd(b64(user), "334");
+    await cmd(b64(pass), "235");
+    await cmd(`MAIL FROM:<${user}>`, "250");
+    await cmd(`RCPT TO:<${to}>`, "250");
+    await cmd("DATA", "354");
+    const body = b64(html).replace(/.{1,76}/g, "$&\r\n");
+    const msg = [
+      `From: =?UTF-8?B?${b64(from)}?= <${user}>`, `To: <${to}>`, `Subject: =?UTF-8?B?${b64(subject)}?=`,
+      `Date: ${new Date().toUTCString()}`, "MIME-Version: 1.0",
+      "Content-Type: text/html; charset=UTF-8", "Content-Transfer-Encoding: base64", "", body,
+    ].join("\r\n");
+    await cmd(msg + "\r\n.", "250");
+    await cmd("QUIT", "221").catch(() => {});
+  } finally {
+    try { conn.close(); } catch { /* already closed */ }
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return preflight(req);
   try {
     const { order_id } = await req.json();
+    console.log("order-email: request");
     const url = Deno.env.get("SUPABASE_URL")!;
     const asUser = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: req.headers.get("Authorization") ?? "" } },
@@ -37,6 +85,7 @@ Deno.serve(async (req) => {
     if (Date.now() - new Date(o.created_at).getTime() > 10 * 60 * 1000) return json({ error: "too old" }, 400);
     const to = o.suppliers?.order_email;
     if (!to) return json({ skipped: "no order email" });
+    console.log("order-email: sending order", o.number);
 
     const lines = (o.order_lines ?? []).sort((a, b) => a.id - b.id);
     const rows = lines.map((l) => {
@@ -52,15 +101,11 @@ Deno.serve(async (req) => {
 <p><b>סה"כ: ${ils(o.total)}</b></p>${o.note ? `<p>הערות: ${esc(o.note)}</p>` : ""}
 <p><a href="https://supplier-orders.netlify.app">לפתיחת ההזמנה באתר</a></p></div>`;
 
-    const user_ = Deno.env.get("GMAIL_USER")!;
-    const mail = nodemailer.createTransport({
-      host: "smtp.gmail.com", port: 465, secure: true,
-      auth: { user: user_, pass: Deno.env.get("GMAIL_APP_PASSWORD")! },
-    });
-    await mail.sendMail({
-      from: `"${o.suppliers?.name ?? "הזמנות"} - הזמנות" <${user_}>`,
-      to, subject: `הזמנה חדשה #${o.number} מ${s.name ?? "חנות"}`, html,
-    });
+    const gu = Deno.env.get("GMAIL_USER")!, gp = (Deno.env.get("GMAIL_APP_PASSWORD") ?? "").replace(/\s/g, "");
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("SMTP timeout")), 20000));
+    await Promise.race([timeout, sendGmail(gu, gp, `${o.suppliers?.name ?? "הזמנות"} - הזמנות`, to,
+      `הזמנה חדשה #${o.number} מ${s.name ?? "חנות"}`, html)]);
+    console.log("order-email: sent order", o.number);
     return json({ sent: true });
   } catch (e) {
     console.error("order-email:", e?.message ?? e);
