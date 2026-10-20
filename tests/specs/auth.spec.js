@@ -38,6 +38,27 @@ test.describe('כניסה והרשמה', () => {
     await expect(page.getByLabel('לזכור את המייל במכשיר הזה')).not.toBeChecked();
   });
 
+  // 2.6: errors from the server always show in Hebrew.
+  for (const [msg, he] of [
+    ['Invalid login credentials', 'המייל או הסיסמה לא נכונים'],
+    ['Request rate limit reached', 'יותר מדי ניסיונות'],
+    ['Some brand new English error', 'משהו השתבש. נסו שוב'],
+  ]) {
+    test('שגיאה מהשרת מוצגת בעברית: ' + msg, async ({ page }) => {
+      await blockServer(page);
+      await page.route(/auth\/v1\/token/, r => r.fulfill({
+        status: 400, contentType: 'application/json',
+        body: JSON.stringify({ code: 400, error_code: 'x', msg }),
+      }));
+      await page.goto('/');
+      await page.locator('input[type=email]').fill('store@example.com');
+      await page.locator('input[autocomplete=current-password]').fill('abc12345');
+      await page.getByRole('button', { name: 'כניסה', exact: true }).click();
+      await expect(page.locator('.toast')).toContainText(he);
+      await expect(page.locator('.toast')).not.toContainText(/[A-Za-z]{3}/);
+    });
+  }
+
   test.describe('הרשמה', () => {
     let calls;
     test.beforeEach(async ({ page }) => {
