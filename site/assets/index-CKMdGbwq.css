@@ -331,3 +331,37 @@ button.ld-block.danger-text{color:var(--danger);border-color:#E8B4AE}
 .ld-url{padding:10px 12px;border-radius:8px;background:var(--soft);font-size:14px;word-break:break-all;text-align:left}
 .ld-link-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ld-link-btns .btn{min-height:44px}
+/* 2.17: supplier list for stores, join requests for suppliers */
+.center-page.sd-wrap{place-items:start center;align-content:start}
+.sd{width:100%;max-width:560px;margin:0 auto}
+.sd h1{margin:0}
+.sd-head{display:flex;align-items:center;gap:12px}
+.sd-head .jn-ic{flex:none;width:52px;height:52px}
+.sd-head p,.sd>div>p{margin:2px 0 0}
+.sd-back{display:inline-flex;min-height:40px;align-items:center}
+.sd-search{display:flex;flex-direction:column;gap:6px;font-weight:500}
+.sd-search input{min-height:48px;font-size:16px}
+.sd-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.sd-card{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.sd-card .btn{min-height:46px;width:100%;justify-content:center}
+.sd-card p{margin:0}
+.sd-top{display:flex;align-items:center;gap:12px}
+.sd-top .st-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sd-top .st-pic{width:46px;height:46px;border-radius:12px}
+.sd-init{display:grid;place-items:center;color:#fff;font-size:20px;font-weight:700;border:0}
+.sd-wait{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;margin:0;padding:6px 10px;border-radius:12px;background:#FEF3E2;color:#8A4B08;font-weight:500;text-align:center}
+.sd-ok{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;border-radius:12px;background:#E6F4EA;color:#1E6B34;font-weight:500}
+.sd-foot{text-align:center;margin:4px 0 0}
+.sd-out{align-self:center;min-height:44px}
+.sd-paste{padding:14px 16px}
+.sup-add .btn.big{margin-top:8px;justify-content:center}
+.sup-add .sd-wait{justify-content:flex-start;margin-top:6px}
+.lr-list{margin-bottom:14px}
+.lr-card{padding:16px;display:flex;flex-direction:column;gap:10px;border:2px solid var(--brand,#1F5FA8)}
+.lr-card h2{margin:0;font-size:17px}
+.lr-card p{margin:0}
+.lr-name{font-size:18px}
+.lr-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lr-btns .btn{min-height:48px;justify-content:center}
+.lr-ok{background:#1E6B34!important;border-color:#1E6B34!important;color:#fff!important}
+.lr-ok:hover{background:#185A2B!important}

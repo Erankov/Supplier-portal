@@ -1,6 +1,7 @@
 // 2.15: emails about join requests. Called from the browser:
 //   {action:"new", id, token}  right after someone sends a request: tells the site owner (GMAIL_USER), once per request.
 //   {action:"code", id}        by the site owner after making a code: sends the code to the customer.
+//   {action:"link", id, token} right after a store asks to join a supplier (2.17): tells the supplier.
 // Secrets and the SMTP client are the same as order-email.
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
@@ -104,6 +105,19 @@ Deno.serve(async (req) => {
 <p style="font-size:28px;font-weight:bold;letter-spacing:6px" dir="ltr">${esc(r.code)}</p>
 <p>נכנסים לאתר, לוחצים "קיבלתם קוד? פתיחת חשבון", ממלאים את הקוד, המייל וסיסמה.<br>הקוד עובד פעם אחת ותקף עד ${when(r.expires_at)}.</p>
 <p><a href="${SITE}/#/code/${encodeURIComponent(r.code)}">לפתיחת החשבון</a></p></div>`;
+    } else if (action === "link") {
+      // A store asked to join a supplier: tell the supplier, once per request.
+      const { data: r, error } = await db.rpc("link_request_mail", { p_id: id, p_token: token });
+      if (error) console.error("join-email: read link", error.message);
+      if (!r) return json({ error: "forbidden" }, 403);
+      if (!r.to) return json({ sent: false });
+      to = r.to;
+      subject = `בקשת הצטרפות מחנות: ${r.name}`;
+      html = `<div dir="rtl" style="font-family:Arial,sans-serif">
+<h2>${esc(r.name)} מבקשת להזמין מ${esc(r.supplier)}</h2>
+<p>איש קשר: ${esc(r.contact)}<br>טלפון: ${esc(r.phone)}<br>מייל: ${esc(r.email)}<br>כתובת: ${esc(r.address)}<br>שעות פעילות: ${esc(r.hours)}</p>
+<p>${when(r.created_at)}</p>
+<p><a href="${SITE}/#/stores">לאישור או דחייה באתר</a></p></div>`;
     } else return json({ error: "bad action" }, 400);
 
     await Promise.race([timeout, sendGmail(gu, gp, "מערכת ההזמנות", to, subject, html)]);
