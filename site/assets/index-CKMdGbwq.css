@@ -269,3 +269,9 @@ input[aria-invalid="true"]{border-color:var(--danger);box-shadow:0 0 0 1px var(-
  .toast{bottom:calc(150px + env(safe-area-inset-bottom))}
 }
 .back{min-height:44px;color:var(--accent);font-weight:500;font-size:15px;text-decoration:none}
+/* 2.14: "my usual order" opens on tap */
+.reg summary{flex-direction:row;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.reg-t{display:flex;flex-direction:column;gap:2px}
+.reg-t b{font-size:17px}
+.reg[open] summary .st-chev{transform:rotate(180deg)}
+.reg:not([open]){padding-block:12px}

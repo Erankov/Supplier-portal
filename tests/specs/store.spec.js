@@ -176,6 +176,10 @@ test.describe('חנות', () => {
     const reg = page.locator('.reg');
     await expect(reg.getByText('ההזמנה הקבועה שלי')).toBeVisible();
     const items = reg.locator('.rlist li');
+    // Closed until tapped (2.14), and stays open on this device after a reload.
+    await expect(items.first()).toBeHidden();
+    await reg.locator('summary').click();
+    await page.reload();
     // Only the first 4 show until asked for more.
     await expect(items).toHaveCount(4);
     await reg.getByRole('button', { name: /עוד \d+ מוצרים/ }).click();
