@@ -179,6 +179,8 @@ test.describe('חנות', () => {
     // Closed until tapped (2.14), and stays open on this device after a reload.
     await expect(items.first()).toBeHidden();
     await reg.locator('summary').click();
+    // Wait until it is open (and remembered) before reloading; on a busy machine the reload could come first.
+    await expect(items.first()).toBeVisible();
     await page.reload();
     // Only the first 4 show until asked for more.
     await expect(items).toHaveCount(4);
