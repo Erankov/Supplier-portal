@@ -222,6 +222,32 @@ test.describe('ספק', () => {
     await expect(page.getByRole('link', { name: 'שליחה בוואטסאפ' })).toHaveAttribute('href', /wa\.me/);
   });
 
+  test('הגדרות: טלפון או מייל לא תקינים לא נשמרים', async ({ page }) => {
+    await openDemo(page, 'admin', 'settings');
+    await expect(page.getByLabel('כתובת')).not.toHaveValue('');
+    await page.getByLabel('טלפון').fill('0501234');
+    await page.getByLabel('מייל לקבלת הזמנות').fill('orders@');
+    await page.getByRole('button', { name: 'שמירה' }).click();
+    await expect(page.locator('.field-err', { hasText: 'מספר הטלפון לא תקין' })).toBeVisible();
+    await expect(page.locator('.field-err', { hasText: 'המייל לא תקין' })).toBeVisible();
+    await page.getByLabel('טלפון').fill('050-1234567');
+    await page.getByLabel('מייל לקבלת הזמנות').fill('orders@clean.co.il');
+    await page.getByLabel('שעות פעילות').fill('א׳-ה׳ 6:00-15:00');
+    await page.getByRole('button', { name: 'שמירה' }).click();
+    await expect(page.getByText('ההגדרות נשמרו')).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel('שעות פעילות')).toHaveValue('א׳-ה׳ 6:00-15:00');
+  });
+
+  test('כרטיס חנות: כמה הזמנות וכמה כסף, וכתובת ושעות בפרטים', async ({ page }) => {
+    await openDemo(page, 'admin', 'stores');
+    const card = page.locator('.st-card', { hasText: 'מרכול השכונה' });
+    await expect(card.locator('.st-stats')).toContainText(/\d+ הזמנות · ₪[\d,.]+/);
+    await card.locator('.st-head').click();
+    await expect(card).toContainText('הרצל 45, רמת גן');
+    await expect(card).toContainText('א׳-ה׳ 7:00-22:00');
+  });
+
   test('שינוי שם העסק בהגדרות נשמר', async ({ page }) => {
     await openDemo(page, 'admin', 'settings');
     const name = page.getByLabel('שם העסק');

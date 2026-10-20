@@ -221,3 +221,15 @@ input,select,textarea{border-radius:10px}
 .hist-main .logo{flex:none}
 .st-txt{color:var(--muted)}
 .hist.act .card,.hist .ord-new,.hist .ord-received{border-inline-start:4px solid var(--accent)}
+/* 2.12: business details, form errors, history toggle, totals on cards */
+.field-err{display:block;margin-top:4px;font-size:13px;font-weight:500;color:var(--danger)}
+input[aria-invalid="true"]{border-color:var(--danger);box-shadow:0 0 0 1px var(--danger)}
+.row-wrap.between{justify-content:space-between}
+.biz-card h2{margin:0;font-size:17px}
+.hist-tog{display:inline-flex;align-items:center;gap:8px;background:none;border:0;padding:6px 0;font:inherit;color:inherit;cursor:pointer}
+.hist-tog[aria-expanded="true"] .st-chev{transform:rotate(180deg)}
+.st-stats{color:var(--ink)}
+.sup-info{display:grid;gap:10px;padding:0 16px 14px}
+.sup-stats{font-size:14px;color:var(--muted,#5B6472)}
+.sup-stats b{color:var(--ink)}
+.sup-info .st-facts{grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px 14px}

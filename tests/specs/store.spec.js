@@ -150,6 +150,11 @@ test.describe('חנות', () => {
       await expect(act.filter({ hasText: name }).first()).toBeVisible();
     await expect(act.first().locator('.badge')).toHaveText(/חדשה|נקלטה/);
     await expect(act.first().locator('.st-txt')).toContainText('הספק');
+    // History stays closed until tapped (2.12).
+    await expect(box.locator('.hist.old')).toHaveCount(0);
+    const tog = box.getByRole('button', { name: /היסטוריה/ });
+    await expect(tog).toHaveAttribute('aria-expanded', 'false');
+    await tog.click();
     await expect(box.locator('.hist.old > li').first()).toBeVisible();
     // Filter by one supplier, then back to all.
     const chips = box.locator('.chips button');
@@ -235,6 +240,53 @@ test.describe('חנות', () => {
     await expect(page.getByText('עובדים עם ספק נוסף?')).toBeVisible();
     await card.locator('.st-head').click();
     await expect(page.locator('.plist li').first()).toBeVisible();
+  });
+
+  test('הספקים שלי: פרטי הקשר של כל ספק וכמה קניתם ממנו החודש', async ({ page }) => {
+    await openDemo(page, 'store');
+    await page.getByRole('link', { name: /הספקים שלי/ }).click();
+    const card = page.locator('.sup-page .st-card', { hasText: 'מחלבת גליל' });
+    await expect(card.locator('.sup-stats')).toContainText(/קניתם החודש: ₪[\d,.]+ · \d+ הזמנות/);
+    await expect(card.getByRole('link', { name: '04-6987654' })).toHaveAttribute('href', 'tel:046987654');
+    await expect(card).toContainText('מושב עמיעד');
+    await expect(card).toContainText('שעות פעילות');
+  });
+
+  test('פרטי העסק שלי: מייל וטלפון לא תקינים לא נשמרים, ותקינים נשמרים', async ({ page }) => {
+    await openDemo(page, 'store');
+    await page.getByRole('link', { name: /הספקים שלי/ }).click();
+    const biz = page.getByRole('region', { name: 'פרטי העסק שלי' });
+    await expect(biz).toContainText('הרצל 45, רמת גן');
+    await biz.getByRole('button', { name: 'עריכה' }).click();
+    await biz.getByLabel('מייל').fill('dana@gmail');
+    await biz.getByLabel('טלפון').fill('12345');
+    await biz.getByRole('button', { name: 'שמירה' }).click();
+    await expect(biz.getByText('המייל לא תקין')).toBeVisible();
+    await expect(biz.getByText('מספר הטלפון לא תקין')).toBeVisible();
+    await expect(biz.getByLabel('טלפון')).toHaveAttribute('aria-invalid', 'true');
+    await biz.getByLabel('מייל').fill('dana@gmail.com');
+    await biz.getByLabel('טלפון').fill('+972 54-765-4321');
+    await biz.getByLabel('שעות פעילות').fill('א׳-ו׳ 6:00-23:00');
+    await biz.getByRole('button', { name: 'שמירה' }).click();
+    await expect(biz.getByRole('link', { name: '+972 54-765-4321' })).toBeVisible();
+    // Saved for this business at every supplier, and kept after a reload.
+    await page.reload();
+    await expect(page.getByRole('region', { name: 'פרטי העסק שלי' })).toContainText('א׳-ו׳ 6:00-23:00');
+  });
+
+  test('הצטרפות לספק: חובה למלא פרטי עסק תקינים', async ({ page }) => {
+    // The join page has no demo bar, so set up the demo here instead of openDemo.
+    await page.addInitScript(() => { try { sessionStorage.setItem('demo_role', 'store'); localStorage.setItem('pending_invite', 'DEMO01'); } catch {} });
+    await page.goto('/?demo');
+    await expect(page.getByRole('heading', { name: 'הצטרפות לספק' })).toBeVisible();
+    await expect(page.getByLabel('מייל')).not.toHaveValue('');
+    await page.getByLabel('טלפון').fill('050-123');
+    await page.getByRole('button', { name: 'הצטרפות' }).click();
+    await expect(page.locator('.field-err', { hasText: 'מספר הטלפון לא תקין' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'הצטרפות לספק' })).toBeVisible();
+    await page.getByLabel('טלפון').fill('03-6123456');
+    await page.getByRole('button', { name: 'הצטרפות' }).click();
+    await expect(page.getByText('הצטרפתם בהצלחה')).toBeVisible();
   });
 
   test('בטלפון תיבות הטקסט בגודל 16 לפחות, כדי שהאייפון לא יגדיל את הדף', async ({ page }, testInfo) => {
