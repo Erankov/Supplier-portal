@@ -39,9 +39,9 @@ test.describe('ספק', () => {
     await expect(page.locator('tr.ord')).toHaveCount(1);
     await expect(page.locator('tr.ord .badge')).toHaveText('חדשה');
     await page.locator('.seg button', { hasText: 'הכל' }).click();
-    await page.getByPlaceholder('חיפוש חנות או מספר הזמנה').fill('שנייה');
+    await page.getByPlaceholder('חיפוש חנות או מספר הזמנה').fill('הדר');
     await expect(page.locator('tr.ord')).toHaveCount(1);
-    await expect(page.locator('tr.ord')).toContainText('חנות שנייה');
+    await expect(page.locator('tr.ord')).toContainText('סופר הדר');
   });
 
   test('פתיחת הזמנה, סימון כנקלטה וביטול', async ({ page }) => {
@@ -59,7 +59,7 @@ test.describe('ספק', () => {
 
   test('קטלוג משלה לחנות עם מחיר מיוחד', async ({ page }) => {
     await openDemo(page, 'admin', 'stores');
-    await (await openStore(page, 'חנות לדוגמה')).getByRole('button', { name: 'קטלוג ומחירים' }).click();
+    await (await openStore(page, 'מרכול השכונה')).getByRole('button', { name: 'קטלוג ומחירים' }).click();
     const modal = page.locator('.modal');
     await modal.getByRole('button', { name: 'רק מוצרים שבחרתי' }).click();
     await modal.getByLabel('חיפוש בקטלוג החנות').fill('6295-7');
@@ -68,7 +68,7 @@ test.describe('ספק', () => {
     await modal.getByLabel(/^מחיר מיוחד:/).fill('50');
     await modal.getByRole('button', { name: 'שמירת הקטלוג' }).click();
     await expect(modal).toBeHidden();
-    await expect(page.locator('.st-card', { hasText: 'חנות לדוגמה' }).locator('.st-head')).toContainText('קטלוג משלה');
+    await expect(page.locator('.st-card', { hasText: 'מרכול השכונה' }).locator('.st-head')).toContainText('קטלוג משלה');
 
     // The store sees only the chosen products, at its own price.
     // (about:blank first, so that only the hash changing still reloads the app with the new role)
@@ -82,7 +82,7 @@ test.describe('ספק', () => {
     // Back to the full catalog: everything shows again at the regular price.
     await page.goto('about:blank');
     await openDemo(page, 'admin', 'stores');
-    await (await openStore(page, 'חנות לדוגמה')).getByRole('button', { name: 'קטלוג ומחירים' }).click();
+    await (await openStore(page, 'מרכול השכונה')).getByRole('button', { name: 'קטלוג ומחירים' }).click();
     await modal.getByRole('button', { name: 'כל הקטלוג' }).click();
     await modal.getByLabel('חיפוש בקטלוג החנות').fill('6295-753');
     await modal.getByLabel(/^מחיר מיוחד:/).fill('');
@@ -108,7 +108,7 @@ test.describe('ספק', () => {
 
   test('חסימת חנות ושחרור', async ({ page }) => {
     await openDemo(page, 'admin', 'stores');
-    const card = await openStore(page, 'חנות לדוגמה');
+    const card = await openStore(page, 'מרכול השכונה');
     const status = card.locator('.st-tags .badge').first();
     await card.getByRole('button', { name: 'חסימה' }).click();
     await expect(status).toHaveText('חסומה');
@@ -121,10 +121,10 @@ test.describe('ספק', () => {
     const cards = page.locator('.st-card');
     await expect(cards).toHaveCount(2);
     // Closed: no buttons yet, the first letter stands in for a picture.
-    const card = cards.filter({ hasText: 'חנות לדוגמה' });
+    const card = cards.filter({ hasText: 'מרכול השכונה' });
     await expect(card.getByRole('button', { name: 'עריכה' })).toHaveCount(0);
-    await expect(card.locator('.st-init')).toHaveText('ח');
-    await openStore(page, 'חנות לדוגמה');
+    await expect(card.locator('.st-init')).toHaveText('מ');
+    await openStore(page, 'מרכול השכונה');
     await expect(card.locator('.st-facts')).toContainText('הזמנות');
     // Someone already joined this store, so no join link; the second store has none yet.
     await expect(card.getByRole('button', { name: 'קישור הצטרפות' })).toHaveCount(0);
@@ -133,7 +133,7 @@ test.describe('ספק', () => {
     // Tapping again closes it.
     await card.locator('.st-head').click();
     await expect(card.getByRole('button', { name: 'עריכה' })).toHaveCount(0);
-    await expect((await openStore(page, 'חנות שנייה')).getByRole('button', { name: 'קישור הצטרפות' })).toBeVisible();
+    await expect((await openStore(page, 'סופר הדר')).getByRole('button', { name: 'קישור הצטרפות' })).toBeVisible();
 
     // The store uploads its own picture, and the supplier sees it on the card.
     const shop = await context.newPage();
@@ -146,7 +146,7 @@ test.describe('ספק', () => {
     await shop.locator('a[href="#/suppliers"]').click();
     await expect(shop.locator('.sup-me img.st-pic')).toBeVisible();
     await page.reload();
-    await expect(page.locator('.st-card', { hasText: 'חנות לדוגמה' }).locator('img.st-pic')).toBeVisible();
+    await expect(page.locator('.st-card', { hasText: 'מרכול השכונה' }).locator('img.st-pic')).toBeVisible();
   });
 
   test('חיפוש בקטלוג', async ({ page }) => {

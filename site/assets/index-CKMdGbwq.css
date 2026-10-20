@@ -210,3 +210,7 @@ input,select,textarea{border-radius:10px}
 .sup-me label.btn{cursor:pointer;flex:none}
 .sup-me label.btn.busy{opacity:.6}
 .st-facts a{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+/* 2.9: demo switcher */
+.demo-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+.demo-sw{display:inline-flex;align-items:center;gap:6px;font-weight:600}
+.demo-sw select{font:inherit;font-size:16px;padding:4px 8px;border-radius:8px;border:1px solid currentColor;background:#fff;color:#111;max-width:100%}

@@ -18,23 +18,39 @@ test.describe('חנות', () => {
     await expect(page.locator('.modal')).toHaveCount(0);
     // The supplier cancels this store's open order (in the demo data).
     const num = await page.evaluate(() => {
-      const db = JSON.parse(localStorage.getItem('demo_db_v1'));
-      const store = db.stores.find(s => s.name === 'חנות לדוגמה');
+      const w = JSON.parse(localStorage.getItem('demo_world_v1'));
+      const db = w.dbs[0];
+      const store = db.stores.find(s => s.name === 'מרכול השכונה');
       const o = db.orders.find(x => x.store_id === store.id && x.status === 'new');
       o.status = 'cancelled';
-      localStorage.setItem('demo_db_v1', JSON.stringify(db));
+      localStorage.setItem('demo_world_v1', JSON.stringify(w));
       return o.number;
     });
     await page.reload();
     const modal = page.locator('.modal');
     await expect(modal).toContainText('הזמנה מספר ' + num);
     await expect(modal).toContainText('בוטלה על ידי הספק');
-    await expect(modal).toContainText('נא ליצור קשר עם ספק לדוגמה');
+    await expect(modal).toContainText('נא ליצור קשר עם קלין פרו ציוד ניקוי');
     await modal.getByRole('button', { name: 'הבנתי' }).click();
     await expect(page.locator('.modal')).toHaveCount(0);
     await page.reload();
     await expect(page.locator('.plist li').first()).toBeVisible();
     await expect(page.locator('.modal')).toHaveCount(0);
+  });
+
+  test('הדגמה: 5 ספקים ו-2 חנויות, ומעבר ביניהם בלחיצה', async ({ page }) => {
+    await openDemo(page, 'store');
+    const sw = page.getByLabel('צפייה בתור');
+    await expect(sw.locator('option')).toHaveCount(7);
+    // "My suppliers" shows all 5 suppliers for the store.
+    await page.getByRole('link', { name: 'הספקים שלי' }).click();
+    await expect(page.locator('.shop-top .count')).toHaveText('5');
+    // Switch to the second store, then to a supplier.
+    await sw.selectOption({ label: 'סופר הדר' });
+    await expect(page.locator('.shop-brand')).toContainText('סופר הדר');
+    await page.getByLabel('צפייה בתור').selectOption({ label: 'משקאות הצפון' });
+    await expect(page.locator('.side, .admin-main').first()).toBeVisible();
+    await expect(page.getByLabel('צפייה בתור')).toHaveValue('s3');
   });
 
   test('חיפוש מוצר לפי שם או מק״ט', async ({ page }) => {
@@ -83,7 +99,7 @@ test.describe('חנות', () => {
 
     const supplier = await context.newPage();
     await openDemo(supplier, 'admin');
-    const row = supplier.locator('tr.ord', { hasText: 'חנות לדוגמה' }).filter({ has: supplier.locator('.s-new') }).first();
+    const row = supplier.locator('tr.ord', { hasText: 'מרכול השכונה' }).filter({ has: supplier.locator('.s-new') }).first();
     await row.click();
     await expect(supplier.getByRole('heading', { name: 'הזמנה ' + number })).toBeVisible();
     await expect(supplier.locator('.page')).toContainText('בלי מדבקות');
@@ -151,7 +167,7 @@ test.describe('חנות', () => {
     // The supplier sees the carton split and the right total.
     const supplier = await context.newPage();
     await openDemo(supplier, 'admin');
-    await supplier.locator('tr.ord', { hasText: 'חנות לדוגמה' }).filter({ has: supplier.locator('.s-new') }).first().click();
+    await supplier.locator('tr.ord', { hasText: 'מרכול השכונה' }).filter({ has: supplier.locator('.s-new') }).first().click();
     await expect(supplier.getByRole('heading', { name: 'הזמנה ' + number })).toBeVisible();
     const line = supplier.locator('tbody tr', { hasText: '6295-753' });
     await expect(line).toContainText('קרטון אחד + 2 יחידות');
@@ -162,9 +178,10 @@ test.describe('חנות', () => {
     await openDemo(page, 'store');
     await page.getByRole('link', { name: /הספקים שלי/ }).click();
     await expect(page.getByRole('heading', { name: 'הספקים שלי' })).toBeVisible();
-    const card = page.locator('.sup-page .st-card');
+    await expect(page.locator('.sup-page .st-card')).toHaveCount(5);
+    const card = page.locator('.sup-page .st-card', { hasText: 'מזמינים ממנו עכשיו' });
     await expect(card).toHaveCount(1);
-    await expect(card).toContainText('ספק לדוגמה');
+    await expect(card).toContainText('קלין פרו ציוד ניקוי');
     await expect(card).toContainText('מזמינים ממנו עכשיו');
     await expect(page.getByText('עובדים עם ספק נוסף?')).toBeVisible();
     await card.locator('.st-head').click();
