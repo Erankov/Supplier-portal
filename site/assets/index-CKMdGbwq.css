@@ -327,3 +327,7 @@ button.ld-block.danger-text{color:var(--danger);border-color:#E8B4AE}
 .ld-okline{display:flex;align-items:center;gap:6px;color:var(--ok);font-weight:500}
 .ld-msg{padding:12px 14px;border-radius:10px;background:var(--soft);font-size:14px;line-height:1.6}
 .ld-empty{padding:24px 0;text-align:center}
+/* 2.16: join link for the site owner */
+.ld-url{padding:10px 12px;border-radius:8px;background:var(--soft);font-size:14px;word-break:break-all;text-align:left}
+.ld-link-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ld-link-btns .btn{min-height:44px}

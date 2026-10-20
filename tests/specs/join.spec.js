@@ -145,3 +145,11 @@ test('בהתראה על התשלום יש כפתור וואטסאפ לבעל ה�
   await openDemo(store, 'store');
   await expect(store.getByRole('dialog').getByRole('link', { name: 'יצירת קשר בוואטסאפ לתשלום' })).toHaveAttribute('href', /^https:\/\/wa\.me\/972543455648\?text=/);
 });
+
+test('בעל האתר שולח ללקוחות קישור לטופס ההצטרפות', async ({ page }) => {
+  await openDemo(page, 'admin', 'leads');
+  const box = page.locator('.ld-link');
+  await expect(box.locator('.ld-url')).toHaveText(/\/#\/apply$/);
+  await expect(box.getByRole('link', { name: 'שליחה בוואטסאפ' })).toHaveAttribute('href', /^https:\/\/wa\.me\/\?text=.*%23%2Fapply/);
+  await expect(box.getByRole('button', { name: 'העתקת הקישור' })).toBeVisible();
+});
