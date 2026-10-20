@@ -214,3 +214,10 @@ input,select,textarea{border-radius:10px}
 .demo-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
 .demo-sw{display:inline-flex;align-items:center;gap:6px;font-weight:600}
 .demo-sw select{font:inherit;font-size:16px;padding:4px 8px;border-radius:8px;border:1px solid currentColor;background:#fff;color:#111;max-width:100%}
+/* 2.11: store "my orders" */
+.my-orders h2{display:flex;align-items:center;gap:8px;margin:4px 0 0;font-size:18px}
+.my-orders h2 .count{font-size:13px}
+.hist-main{display:flex;align-items:center;gap:12px;min-width:0}
+.hist-main .logo{flex:none}
+.st-txt{color:var(--muted)}
+.hist.act .card,.hist .ord-new,.hist .ord-received{border-inline-start:4px solid var(--accent)}

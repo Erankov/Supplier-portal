@@ -127,8 +127,9 @@ test.describe('חנות', () => {
     await expect(cart).not.toContainText('קולה');
   });
 
-  test('הזמנות קודמות והזמנה חוזרת', async ({ page }, testInfo) => {
+  test('ההזמנות שלי: הזמנה חוזרת', async ({ page }, testInfo) => {
     await openDemo(page, 'store', 'history');
+    await page.locator('.my-orders .chips button', { hasText: 'קלין פרו ציוד ניקוי' }).click();
     const order = page.locator('.hist .card').first();
     await order.locator('.hist-row').click();
     await expect(order.locator('.hist-lines li').first()).toBeVisible();
@@ -136,6 +137,33 @@ test.describe('חנות', () => {
     await order.getByRole('button', { name: /הזמנה חוזרת/ }).click();
     const cart = await openCart(page, testInfo);
     await expect(cart.locator('.clist li')).toHaveCount(lines);
+  });
+
+  test('ההזמנות שלי: הזמנות פעילות מכל הספקים עם סטטוס, והיסטוריה עם סינון לפי ספק', async ({ page }) => {
+    await openDemo(page, 'store');
+    await page.getByRole('link', { name: 'ההזמנות שלי' }).click();
+    const box = page.locator('.my-orders');
+    // Open orders from all 5 suppliers, each with its status at the supplier.
+    const act = box.locator('.hist.act > li');
+    await expect(act.first()).toBeVisible();
+    for (const name of ['קלין פרו ציוד ניקוי', 'מאפיית לחם הארץ', 'מחלבת גליל', 'משקאות הצפון', 'פרי וירק אחים לוי'])
+      await expect(act.filter({ hasText: name }).first()).toBeVisible();
+    await expect(act.first().locator('.badge')).toHaveText(/חדשה|נקלטה/);
+    await expect(act.first().locator('.st-txt')).toContainText('הספק');
+    await expect(box.locator('.hist.old > li').first()).toBeVisible();
+    // Filter by one supplier, then back to all.
+    const chips = box.locator('.chips button');
+    await expect(chips).toHaveCount(6);
+    const all = await box.locator('.hist > li').count();
+    await chips.filter({ hasText: 'מחלבת גליל' }).click();
+    const rows = box.locator('.hist > li');
+    for (const t of await rows.allInnerTexts()) expect(t).toContain('מחלבת גליל');
+    await chips.filter({ hasText: 'הכל' }).click();
+    await expect(rows).toHaveCount(all);
+    // An order of another supplier offers to switch to it instead of copying it into this cart.
+    await chips.filter({ hasText: 'משקאות הצפון' }).click();
+    await rows.first().locator('.hist-row').click();
+    await expect(rows.first().getByRole('button', { name: 'מעבר למשקאות הצפון' })).toBeVisible();
   });
 
   test('ההזמנה הקבועה שלי ממלאת את העגלה כמו בפעם הקודמת', async ({ page }, testInfo) => {
